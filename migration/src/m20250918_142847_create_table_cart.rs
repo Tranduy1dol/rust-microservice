@@ -9,32 +9,23 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Product::Table)
+                    .table(Cart::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Product::Id)
-                            .big_integer()
-                            .primary_key()
-                            .not_null()
-                            .auto_increment(),
-                    )
-                    .col(ColumnDef::new(Product::Name).string_len(255).not_null())
-                    .col(ColumnDef::new(Product::Description).string())
-                    .col(
-                        ColumnDef::new(Product::Price)
-                            .decimal_len(10, 2)
-                            .not_null()
-                            .check(Expr::col(Product::Price).gte(0)),
-                    )
-                    .col(ColumnDef::new(Product::CategoryId).big_integer())
-                    .col(
-                        ColumnDef::new(Product::StockQuantity)
+                        ColumnDef::new(Cart::Id)
                             .integer()
                             .not_null()
-                            .check(Expr::col(Product::StockQuantity).gte(0)),
+                            .auto_increment()
+                            .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(Product::CreatedAt)
+                        ColumnDef::new(Cart::UserId)
+                            .big_integer()
+                            .not_null()
+                            .unique_key(),
+                    )
+                    .col(
+                        ColumnDef::new(Cart::CreatedAt)
                             .big_integer()
                             .not_null()
                             .default(Expr::cust(
@@ -42,7 +33,7 @@ impl MigrationTrait for Migration {
                             )),
                     )
                     .col(
-                        ColumnDef::new(Product::UpdatedAt)
+                        ColumnDef::new(Cart::UpdatedAt)
                             .big_integer()
                             .not_null()
                             .default(Expr::cust(
@@ -51,25 +42,38 @@ impl MigrationTrait for Migration {
                     )
                     .to_owned(),
             )
+            .await?;
+
+        manager
+            .create_foreign_key(
+                ForeignKey::create()
+                    .name("fk_cart_user_id")
+                    .from(Cart::Table, Cart::UserId)
+                    .to(User::Table, User::Id)
+                    .on_delete(ForeignKeyAction::Cascade)
+                    .to_owned(),
+            )
             .await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Product::Table).to_owned())
+            .drop_table(Table::drop().table(Cart::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum Product {
+enum Cart {
     Table,
     Id,
-    Name,
-    Description,
-    CategoryId,
-    Price,
-    StockQuantity,
+    UserId,
     CreatedAt,
     UpdatedAt,
+}
+
+#[derive(DeriveIden)]
+enum User {
+    Table,
+    Id,
 }

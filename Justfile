@@ -10,6 +10,10 @@ migrate-up:
 migrate-down:
     sea-orm-cli migrate -d ./migration down
 
+# Migrate refresh
+migrate-refresh:
+    sea-orm-cli migrate -d ./migration refresh
+
 # Generate entities
 entity-generate:
     sea-orm-cli generate entity -o entities/src
