@@ -17,7 +17,7 @@ pub async fn setup_database_connection(
             Ok(())
         }
         Err(err) => {
-            println!("Database connection error: {}", err);
+            println!("Database connection error: {err}");
             std::process::exit(1);
         }
     }
@@ -34,7 +34,7 @@ async fn connect_to_database(
     let mut opt = ConnectOptions::new(database_url.to_owned());
     let db_config = db_config.unwrap_or_default();
     opt.max_connections(db_config.max_connections.max(1))
-        .min_connections(db_config.min_connections.max(0))
+        .min_connections(db_config.min_connections)
         .connect_timeout(Duration::from_secs(db_config.connect_timeout.max(1)))
         .acquire_timeout(Duration::from_secs(db_config.acquire_timeout.max(1)))
         .idle_timeout(Duration::from_secs(db_config.idle_timeout.max(60)))

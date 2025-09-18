@@ -8,6 +8,12 @@ pub struct OrderItemRepository {
     database: DatabaseConnection,
 }
 
+impl Default for OrderItemRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OrderItemRepository {
     pub fn new() -> Self {
         Self {
