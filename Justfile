@@ -13,3 +13,8 @@ migrate-down:
 # Generate entities
 entity-generate:
     sea-orm-cli generate entity -o entities/src
+
+# Format .toml files
+toml-fmt:
+    taplo fmt -c ./taplo/taplo.toml
+

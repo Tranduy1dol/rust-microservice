@@ -8,4 +8,5 @@
 # Target files
 /migration/target
 /entities/target
+/e2e-tests/target
 /target
