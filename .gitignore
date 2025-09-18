@@ -1,4 +1,11 @@
-/target
-/.env
+# IDE configuration file
 /.idea
+
+# Environment variables
+/.env
+/e2e-tests/.env
+
+# Target files
 /migration/target
+/entities/target
+/target
