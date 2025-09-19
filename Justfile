@@ -18,7 +18,7 @@ migrate-refresh:
 entity-generate:
     sea-orm-cli generate entity -o entities/src
 
-# Format .toml files
-toml-fmt:
-    taplo fmt -c ./taplo/taplo.toml
+# Format codes
+fmt:
+    taplo fmt -c ./taplo/taplo.toml && cargo fmt
 

@@ -14,6 +14,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20250918_142847_create_table_cart::Migration),
             Box::new(m20250918_142851_create_table_cart_item::Migration),
             Box::new(m20250918_142908_create_table_review::Migration),
+            Box::new(m20250919_025343_create_table_admin::Migration),
+            Box::new(m20250919_031219_create_foreign_key_product_category_id::Migration),
         ]
     }
 }
@@ -25,3 +27,5 @@ mod m20250918_142832_create_table_category;
 mod m20250918_142847_create_table_cart;
 mod m20250918_142851_create_table_cart_item;
 mod m20250918_142908_create_table_review;
+mod m20250919_025343_create_table_admin;
+mod m20250919_031219_create_foreign_key_product_category_id;

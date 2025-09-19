@@ -9,3 +9,4 @@ pub mod cart;
 pub mod cart_item;
 pub mod category;
 pub mod review;
+pub mod admin;

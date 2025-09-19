@@ -2,6 +2,7 @@
 
 pub mod prelude;
 
+pub mod admin;
 pub mod cart;
 pub mod cart_item;
 pub mod category;
