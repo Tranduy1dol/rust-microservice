@@ -4,16 +4,24 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
 pub struct Config {
-    #[clap(short, long, default_value = "warn")]
+    #[clap(short, env, default_value = "warn")]
     pub log_level: String,
 
-    #[clap(short, long, default_value = "3030")]
+    #[clap(short, env, default_value = "3030")]
     pub port: u16,
 
-    #[clap(long, default_value = "postgres")]
+    #[clap(long, env, default_value = "postgres")]
     pub database_url: String,
+
+    #[clap(long, env, default_value = "")]
+    pub jwt_secret: String,
+
+    #[clap(long, env, default_value = "")]
+    pub jwt_iss: String,
+
+    #[clap(long, env, use_value_delimiter = true, value_delimiter = ',')]
+    pub jwt_aud: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -40,5 +48,30 @@ impl Default for DbConfig {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct JwtConfig {
+    pub jwt_secret: String,
+    pub jwt_iss: String,
+    pub jwt_aud: Vec<String>,
+}
+
+impl JwtConfig {
+    pub fn new() -> Self {
+        Self {
+            jwt_secret: APP_CONFIG.jwt_secret.clone(),
+            jwt_iss: APP_CONFIG.jwt_iss.clone(),
+            jwt_aud: APP_CONFIG.jwt_aud.clone(),
+        }
+    }
+}
+
+impl Default for JwtConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub static JWT_CONFIG: LazyLock<JwtConfig> = LazyLock::new(JwtConfig::new);
 
 pub static APP_CONFIG: LazyLock<Config> = LazyLock::new(Config::parse);
