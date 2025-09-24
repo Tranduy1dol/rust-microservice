@@ -3,6 +3,8 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
+use bcrypt::BcryptError;
+use sea_orm::DbErr;
 use serde_json::json;
 
 #[derive(thiserror::Error, Debug)]
@@ -10,12 +12,40 @@ use serde_json::json;
 pub enum Error {
     #[error("{0}")]
     Internal(#[from] Internal),
+
+    #[error("{0}")]
+    BadRequest(#[from] BadRequest),
+
+    #[error("{0}")]
+    Unauthorized(#[from] Unauthorized),
+
+    #[error("{0}")]
+    NotFound(#[from] NotFound),
+
+    #[error("{0}")]
+    HashPassword(#[from] BcryptError),
+
+    #[error("{0}")]
+    Database(#[from] DbErr),
 }
 
 impl Error {
+    pub fn internal(message: String) -> Self {
+        Self::Internal(Internal { message })
+    }
+
+    pub fn unauthorized(message: String) -> Self {
+        Self::Unauthorized(Unauthorized { message })
+    }
+
     fn get_codes(&self) -> (StatusCode, u16) {
         match self {
-            Error::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, 500),
+            Error::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10001),
+            Error::BadRequest(_) => (StatusCode::BAD_REQUEST, 10002),
+            Error::Unauthorized(_) => (StatusCode::UNAUTHORIZED, 10003),
+            Error::NotFound(_) => (StatusCode::NOT_FOUND, 10004),
+            Error::HashPassword(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10005),
+            Error::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10006),
         }
     }
 }
@@ -33,5 +63,23 @@ impl IntoResponse for Error {
 #[derive(thiserror::Error, Debug)]
 #[error("Internal error: {message}")]
 pub struct Internal {
+    pub message: String,
+}
+
+#[derive(thiserror::Error, Debug)]
+#[error("Bad Request: {message}")]
+pub struct BadRequest {
+    pub message: String,
+}
+
+#[derive(thiserror::Error, Debug)]
+#[error("Unauthorized: {message}")]
+pub struct Unauthorized {
+    pub message: String,
+}
+
+#[derive(thiserror::Error, Debug)]
+#[error("Not found: {message}")]
+pub struct NotFound {
     pub message: String,
 }

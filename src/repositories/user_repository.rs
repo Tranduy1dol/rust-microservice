@@ -1,10 +1,14 @@
 use std::sync::LazyLock;
 
 use chrono::Utc;
-use entities::user::{ActiveModel as UserActiveModel, Entity as User, Model as UserModel};
-use sea_orm::{DatabaseConnection, DbErr, EntityTrait, NotSet, Set};
+use entities::user::{
+    ActiveModel as UserActiveModel, Column, Entity as User, Model as UserModel, Model,
+};
+use sea_orm::{
+    sea_query::Expr, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, NotSet, QueryFilter, Set,
+};
 
-use crate::database::get_database;
+use crate::{database::get_database, errors::Error};
 
 pub struct UserRepository {
     database: DatabaseConnection,
@@ -27,11 +31,24 @@ impl UserRepository {
         &self,
         user_name: String,
         email: String,
-        password_hash: String,
+        password: String,
         first_name: String,
         last_name: String,
         address: String,
-    ) -> Result<UserModel, DbErr> {
+    ) -> Result<UserModel, Error> {
+        if User::find()
+            .filter(Column::Email.eq(email.clone()))
+            .one(&self.database)
+            .await
+            .is_ok()
+        {
+            return Err(Error::from(DbErr::Custom(
+                "User already exists!".to_string(),
+            )));
+        }
+
+        let password_hash = bcrypt::hash(password.as_bytes(), bcrypt::DEFAULT_COST)?;
+
         let now = Utc::now().timestamp_millis();
         let active_model = UserActiveModel {
             id: NotSet,
@@ -45,9 +62,46 @@ impl UserRepository {
             updated_at: Set(now),
         };
 
-        User::insert(active_model)
+        let model = User::insert(active_model)
             .exec_with_returning(&self.database)
-            .await
+            .await?;
+
+        Ok(model)
+    }
+
+    pub async fn get_user_by_email(&self, email: String) -> Result<UserModel, Error> {
+        let user = User::find()
+            .filter(Column::Email.eq(email))
+            .one(&self.database)
+            .await?;
+
+        if user.is_none() {
+            return Err(Error::from(DbErr::Custom("User not found!".to_string())));
+        }
+
+        Ok(user.unwrap())
+    }
+
+    pub async fn update_user_password(
+        &self,
+        email: String,
+        password: String,
+    ) -> Result<Model, Error> {
+        let password_hash = bcrypt::hash(password.as_bytes(), bcrypt::DEFAULT_COST)?;
+        let models = User::update_many()
+            .filter(Column::Email.eq(email))
+            .col_expr(Column::PasswordHash, Expr::value(password_hash))
+            .col_expr(
+                Column::UpdatedAt,
+                Expr::value(Utc::now().timestamp_millis()),
+            )
+            .exec_with_returning(&self.database)
+            .await?;
+
+        models
+            .into_iter()
+            .next()
+            .ok_or(Error::from(DbErr::Custom("User not found!".to_string())))
     }
 }
 

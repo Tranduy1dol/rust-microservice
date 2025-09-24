@@ -46,8 +46,8 @@ This list is structured around the capabilities your backend service would need 
 ## 👤 User & Auth Service
 
 ---
-- [ ] Core: User registration, login (e.g., with JWT tokens), password reset, and profile management.
-- [ ] Data: Manages user data, addresses, and authentication.
+- [x] Core: User registration, login (e.g., with JWT tokens), password reset, and profile management.
+- [x] Data: Manages user data, addresses, and authentication.
 
 ## 📦 Product Catalog Service
 
@@ -67,11 +67,17 @@ This list is structured around the capabilities your backend service would need 
 ---
 - [ ] Order Creation: Convert a user's shopping cart into a formal order.
 - [ ] Order History: Allows users to retrieve a list of their past and current orders.
-- [ ] Order Management (Admin): View all orders and update their status (e.g., processing, shipped, cancelled).
+- [ ] Order Management (Admin): View all orders and update their status (e.g., processing, shipped, canceled).
 
 ## ⭐ Reviews & Wishlist Service
 
 ---
-- [ ] Reviews: Allow authenticated users to submit reviews (rating + text) for products they've purchased. Fetch all reviews for a given product.
+- [ ] Reviews: Allow authenticated users to submit reviews (rating and text) for products they've purchased. Fetch all reviews for a given product.
 - [ ] Wishlist: Enable users to add or remove products from a personal wishlist.
 
+# TODO List
+
+---
+- [ ] Implement feature lists.
+- [ ] Implement e2e test & benchmark test.
+- [ ] Add a CI/CD pipeline for auto build, deploy and test.

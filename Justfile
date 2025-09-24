@@ -20,5 +20,5 @@ entity-generate:
 
 # Format codes
 fmt:
-    taplo fmt -c ./taplo/taplo.toml && cargo fmt
+    taplo fmt -c ./taplo/taplo.toml && cargo fmt && cargo clippy
 
