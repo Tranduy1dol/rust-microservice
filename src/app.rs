@@ -5,4 +5,5 @@ pub async fn create_app() -> Router {
         .nest("/order", crate::routes::order::route::create_route())
         .nest("/health", crate::routes::health::route::create_route())
         .nest("/user", crate::routes::user::route::create_route())
+        .nest("/admin", crate::routes::admin::route::create_route())
 }
