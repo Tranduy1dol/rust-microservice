@@ -2,7 +2,7 @@ use std::sync::LazyLock;
 
 use chrono::Utc;
 use entities::admin::{
-    ActiveModel as AdminActiveModel, Column, Entity as Admin, Model as AdminModel,
+    ActiveModel as AdminActiveModel, Column, Entity as Admin, Model as AdminModel, Model,
 };
 use sea_orm::{
     prelude::Expr,
@@ -76,6 +76,20 @@ impl AdminRepository {
             .ok_or(Error::from(DbErr::Custom(format!(
                 "Admin with email {email} not found"
             ))))
+    }
+
+    pub async fn get_admin_by_email(&self, email: String) -> Result<Model, Error> {
+        Admin::find()
+            .filter(Column::Email.eq(email.clone()))
+            .one(&self.database)
+            .await
+            .map_err(Error::from)?
+            .ok_or_else(|| {
+                Error::from(DbErr::Custom(format!(
+                    "Admin with email {} not found!",
+                    email
+                )))
+            })
     }
 }
 

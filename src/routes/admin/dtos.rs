@@ -27,6 +27,21 @@ pub struct CreateAdminRequestDto {
 
 #[derive(Debug, Deserialize, Serialize, Validate)]
 #[serde(rename_all = "camelCase")]
+pub struct AdminLoginRequestDto {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct AdminLoginResponseDto {
+    pub id: String,
+    pub name: String,
+    pub token: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Validate)]
+#[serde(rename_all = "camelCase")]
 pub struct AdminResponseDto {
     pub id: i64,
     pub email: String,

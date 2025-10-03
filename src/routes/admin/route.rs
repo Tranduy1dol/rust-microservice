@@ -4,9 +4,14 @@ use axum::{
 };
 
 use crate::{
+    auth::jwt::generate_jwt_token,
+    config::JWT_CONFIG,
     errors::Error,
     repositories::admin_repository::ADMIN_REPOSITORY,
-    routes::admin::dtos::{AdminResponseDto, CreateAdminRequestDto, UpdateAdminLevelRequestDto},
+    routes::admin::dtos::{
+        AdminLoginRequestDto, AdminLoginResponseDto, AdminResponseDto, CreateAdminRequestDto,
+        UpdateAdminLevelRequestDto,
+    },
 };
 
 pub fn create_route() -> Router {
@@ -46,5 +51,34 @@ pub async fn update_admin_level(
             level: admin.level,
         })),
         Err(err) => Err(err),
+    }
+}
+
+pub async fn admin_login(
+    Json(request): Json<AdminLoginRequestDto>,
+) -> Result<Json<AdminLoginResponseDto>, Error> {
+    let admin = ADMIN_REPOSITORY.get_admin_by_email(request.email).await?;
+    match bcrypt::verify(&request.password, admin.password_hash.as_str()) {
+        Ok(success) => {
+            if success {
+                let token = generate_jwt_token(
+                    admin.id,
+                    admin.email.as_str(),
+                    admin.name.as_str(),
+                    Some(admin.level),
+                    &JWT_CONFIG,
+                )
+                .map_err(Error::from)?;
+
+                Ok(Json(AdminLoginResponseDto {
+                    id: admin.id.to_string(),
+                    name: admin.name,
+                    token,
+                }))
+            } else {
+                Err(Error::unauthorized("Invalid password".to_string()))
+            }
+        }
+        Err(err) => Err(Error::from(err)),
     }
 }

@@ -27,14 +27,14 @@ pub struct TokenClaims {
     pub aud: String,              // Audience
     pub iat: i64,                 // Issued At
     pub exp: i64,                 // Expiration Time
-    pub admin_level: Option<i64>, // Permissions scope
+    pub admin_level: Option<i32>, // Permissions scope
 }
 
 pub fn generate_jwt_token(
     user_id: i64,
     email: &str,
     name: &str,
-    admin_level: Option<i64>,
+    admin_level: Option<i32>,
     jwt_config: &JwtConfig,
 ) -> Result<String, jsonwebtoken::errors::Error> {
     let now = Utc::now();

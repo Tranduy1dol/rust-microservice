@@ -27,6 +27,9 @@ pub enum Error {
 
     #[error("{0}")]
     Database(#[from] DbErr),
+
+    #[error("{0}")]
+    Jsonwebtoken(#[from] jsonwebtoken::errors::Error),
 }
 
 impl Error {
@@ -46,6 +49,7 @@ impl Error {
             Error::NotFound(_) => (StatusCode::NOT_FOUND, 10004),
             Error::HashPassword(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10005),
             Error::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10006),
+            Error::Jsonwebtoken(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10007),
         }
     }
 }
