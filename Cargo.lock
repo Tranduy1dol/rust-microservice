@@ -2136,6 +2136,7 @@ dependencies = [
  "once_cell",
  "platforms 2.0.0",
  "platforms 3.6.0",
+ "rust_decimal",
  "sea-orm",
  "serde",
  "serde_json",

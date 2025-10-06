@@ -41,6 +41,10 @@ impl Error {
         Self::Unauthorized(Unauthorized { message })
     }
 
+    pub fn not_found(message: String) -> Self {
+        Self::NotFound(NotFound { message })
+    }
+
     fn get_codes(&self) -> (StatusCode, u16) {
         match self {
             Error::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10001),
