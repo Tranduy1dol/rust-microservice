@@ -21,10 +21,12 @@ pub enum AdminScopes {
     // Reading scopes
     AnalyticsRead,
     ProductsRead,
+    CategoriesRead,
     UsersRead,
     AdminsRead,
     // Writing scopes
     ProductsWrite,
+    CategoriesWrite,
     UsersWrite,
     AdminsWrite,
 }
@@ -32,10 +34,18 @@ pub enum AdminScopes {
 static ADMIN_SCOPE: LazyLock<HashMap<i32, Vec<AdminScopes>>> = LazyLock::new(|| {
     HashMap::from([
         (1, vec![AdminScopes::AnalyticsRead]),
-        (2, vec![AdminScopes::ProductsRead, AdminScopes::UsersRead]),
+        (
+            2,
+            vec![
+                AdminScopes::CategoriesRead,
+                AdminScopes::ProductsRead,
+                AdminScopes::UsersRead,
+            ],
+        ),
         (
             3,
             vec![
+                AdminScopes::CategoriesWrite,
                 AdminScopes::AdminsRead,
                 AdminScopes::ProductsWrite,
                 AdminScopes::UsersWrite,

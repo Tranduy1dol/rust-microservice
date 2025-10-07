@@ -9,6 +9,7 @@ use sea_orm::{DatabaseConnection, EntityTrait, NotSet, Set};
 
 use crate::database::get_database;
 use crate::errors::Error;
+use crate::repositories::category_repository::CATEGORY_REPOSITORY;
 
 pub struct ProductRepository {
     database: DatabaseConnection,
@@ -36,6 +37,12 @@ impl ProductRepository {
         stock_quantity: i32,
     ) -> Result<ProductModel, Error> {
         let now = Utc::now().timestamp();
+
+        if category_id.is_some() {
+            if let Err(err) = CATEGORY_REPOSITORY.get_category(category_id.unwrap()).await {
+                return Err(Error::from(err));
+            }
+        }
 
         let active_model = ProductActiveModel {
             id: NotSet,
@@ -74,6 +81,12 @@ impl ProductRepository {
         category_id: Option<i64>,
         stock_quantity: Option<i32>,
     ) -> Result<ProductModel, Error> {
+        if category_id.is_some() {
+            if let Err(err) = CATEGORY_REPOSITORY.get_category(category_id.unwrap()).await {
+                return Err(Error::from(err));
+            }
+        }
+
         let mut active_model = ProductActiveModel {
             id: Set(id),
             description: Set(description),
