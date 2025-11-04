@@ -21,3 +21,8 @@ pub struct EditProductRequestDto {
     pub description: Option<String>,
     pub stock_quantity: Option<i32>,
 }
+
+#[derive(Deserialize)]
+pub struct SearchQueryDto {
+    pub q: String,
+}

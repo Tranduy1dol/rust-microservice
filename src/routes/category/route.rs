@@ -1,6 +1,6 @@
 use axum::{
-    extract::Path,
-    routing::{delete, patch, post},
+    extract::{Path, Query},
+    routing::{delete, get, patch, post},
     Json, Router,
 };
 use chrono::Utc;
@@ -8,15 +8,23 @@ use chrono::Utc;
 use crate::{
     auth::admin::{AdminAuth, AdminScopes, RouteState},
     errors::Error,
-    repositories::category_repository::CATEGORY_REPOSITORY,
-    routes::category::dtos::{
-        request::{CreateCategoryRequestDto, EditCreateCategoryRequestDto},
-        response::{CategoryResponseDto, DeleteCategoryResponseDto},
+    repositories::{
+        category_repository::CATEGORY_REPOSITORY, product_repository::PRODUCT_REPOSITORY,
     },
+    routes::{
+        category::dtos::{
+            request::{CreateCategoryRequestDto, EditCreateCategoryRequestDto},
+            response::{CategoryResponseDto, DeleteCategoryResponseDto},
+        },
+        product::dtos::response::ProductResponseDto,
+    },
+    utils::dtos::PaginationDto,
 };
 
 pub fn create_route() -> Router {
     Router::new()
+        // Route công khai (MỚI)
+        .route("/:id/products", get(get_products_by_category))
         .route(
             "/",
             post(create_category).with_state(RouteState::new(AdminScopes::CategoriesWrite)),
@@ -76,4 +84,30 @@ pub async fn edit_category(
         })),
         Err(err) => Err(err),
     }
+}
+
+pub async fn get_products_by_category(
+    Path(category_id): Path<i64>,
+    Query(pagination): Query<PaginationDto>,
+) -> Result<Json<Vec<ProductResponseDto>>, Error> {
+    // Gọi hàm từ product_repository
+    let (products, _num_pages) = PRODUCT_REPOSITORY
+        .get_products_by_category(category_id, pagination.page, pagination.page_size)
+        .await?;
+
+    let response = products
+        .into_iter()
+        .map(|model| ProductResponseDto {
+            id: model.id,
+            name: model.name,
+            description: model.description,
+            price: model.price,
+            stock_quantity: model.stock_quantity,
+            category_id: model.category_id,
+            created_at: model.created_at,
+            updated_at: model.updated_at,
+        })
+        .collect();
+
+    Ok(Json(response))
 }

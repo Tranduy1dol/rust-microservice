@@ -2,10 +2,13 @@ use std::sync::LazyLock;
 
 use chrono::Utc;
 use entities::product::{
-    ActiveModel as ProductActiveModel, Entity as Product, Model as ProductModel,
+    ActiveModel as ProductActiveModel, Column, Entity as Product, Model as ProductModel,
 };
 use rust_decimal::Decimal;
-use sea_orm::{DatabaseConnection, EntityTrait, NotSet, Set};
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, NotSet, PaginatorTrait, QueryFilter, QueryOrder,
+    Set,
+};
 
 use crate::database::get_database;
 use crate::errors::Error;
@@ -38,10 +41,8 @@ impl ProductRepository {
     ) -> Result<ProductModel, Error> {
         let now = Utc::now().timestamp();
 
-        if category_id.is_some() {
-            if let Err(err) = CATEGORY_REPOSITORY.get_category(category_id.unwrap()).await {
-                return Err(Error::from(err));
-            }
+        if let Some(category_id) = category_id {
+            CATEGORY_REPOSITORY.get_category(category_id).await?;
         }
 
         let active_model = ProductActiveModel {
@@ -81,10 +82,8 @@ impl ProductRepository {
         category_id: Option<i64>,
         stock_quantity: Option<i32>,
     ) -> Result<ProductModel, Error> {
-        if category_id.is_some() {
-            if let Err(err) = CATEGORY_REPOSITORY.get_category(category_id.unwrap()).await {
-                return Err(Error::from(err));
-            }
+        if let Some(category_id) = category_id {
+            CATEGORY_REPOSITORY.get_category(category_id).await?;
         }
 
         let mut active_model = ProductActiveModel {
@@ -111,6 +110,63 @@ impl ProductRepository {
             .exec(&self.database)
             .await
             .map_err(Error::from)
+    }
+
+    pub async fn get_product_by_id(&self, id: i64) -> Result<ProductModel, Error> {
+        Product::find_by_id(id)
+            .one(&self.database)
+            .await
+            .map_err(Error::from)?
+            .ok_or(Error::not_found(format!("No such product with id {}", id)))
+    }
+
+    pub async fn get_all_products(
+        &self,
+        page: u64,
+        page_size: u64,
+    ) -> Result<(Vec<ProductModel>, u64), Error> {
+        let paginator = Product::find()
+            .order_by_asc(Column::Name)
+            .paginate(&self.database, page_size);
+
+        let num_pages = paginator.num_pages().await.map_err(Error::from)?;
+        let products = paginator.fetch_page(page - 1).await.map_err(Error::from)?;
+
+        Ok((products, num_pages))
+    }
+
+    pub async fn search_products_by_name(
+        &self,
+        query: String,
+        page: u64,
+        page_size: u64,
+    ) -> Result<(Vec<ProductModel>, u64), Error> {
+        let paginator = Product::find()
+            .filter(Column::Name.contains(query))
+            .order_by_asc(Column::Name)
+            .paginate(&self.database, page_size);
+
+        let num_pages = paginator.num_pages().await.map_err(Error::from)?;
+        let products = paginator.fetch_page(page - 1).await.map_err(Error::from)?;
+
+        Ok((products, num_pages))
+    }
+
+    pub async fn get_products_by_category(
+        &self,
+        category_id: i64,
+        page: u64,
+        page_size: u64,
+    ) -> Result<(Vec<ProductModel>, u64), Error> {
+        let paginator = Product::find()
+            .filter(Column::CategoryId.eq(category_id))
+            .order_by_asc(Column::Name)
+            .paginate(&self.database, page_size);
+
+        let num_pages = paginator.num_pages().await.map_err(Error::from)?;
+        let products = paginator.fetch_page(page - 1).await.map_err(Error::from)?;
+
+        Ok((products, num_pages))
     }
 }
 
