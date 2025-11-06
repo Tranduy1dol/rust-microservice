@@ -1,6 +1,7 @@
 use chrono::Utc;
-use entities::user::{
-    ActiveModel as UserActiveModel, Column, Entity as User, Model as UserModel, Model,
+use entities::{
+    cart::{ActiveModel as CartActiveModel, Entity as Cart},
+    user::{ActiveModel as UserActiveModel, Column, Entity as User, Model as UserModel, Model},
 };
 use sea_orm::{
     sea_query::Expr, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, NotSet, QueryFilter, Set,
@@ -55,20 +56,20 @@ impl UserRepository {
 
         let txn = self.database.begin().await?;
 
-        let model = User::insert(active_model).exec_with_returning(&txn).await?;
-        let cart_active_model = entities::cart::ActiveModel {
+        let user_model = User::insert(active_model).exec_with_returning(&txn).await?;
+
+        let now = Utc::now().timestamp_millis();
+        let cart_active_model = CartActiveModel {
             id: NotSet,
-            user_id: Set(model.id),
+            user_id: Set(user_model.id),
             created_at: Set(now),
             updated_at: Set(now),
         };
-        entities::cart::Entity::insert(cart_active_model)
-            .exec(&txn)
-            .await?;
+        Cart::insert(cart_active_model).exec(&txn).await?;
 
         txn.commit().await?;
 
-        Ok(model)
+        Ok(user_model)
     }
 
     pub async fn get_user_by_email(&self, email: String) -> Result<UserModel, Error> {
