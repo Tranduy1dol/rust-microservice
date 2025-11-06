@@ -30,6 +30,9 @@ pub enum Error {
 
     #[error("{0}")]
     Jsonwebtoken(#[from] jsonwebtoken::errors::Error),
+
+    #[error("{0}")]
+    Validator(#[from] validator::ValidationErrors),
 }
 
 impl Error {
@@ -45,6 +48,10 @@ impl Error {
         Self::NotFound(NotFound { message })
     }
 
+    pub fn bad_request(message: String) -> Self {
+        Self::BadRequest(BadRequest { message })
+    }
+
     fn get_codes(&self) -> (StatusCode, u16) {
         match self {
             Error::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10001),
@@ -54,6 +61,7 @@ impl Error {
             Error::HashPassword(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10005),
             Error::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10006),
             Error::Jsonwebtoken(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10007),
+            Error::Validator(_) => (StatusCode::BAD_REQUEST, 10008),
         }
     }
 }

@@ -10,21 +10,8 @@ pub static DATABASE: OnceCell<DatabaseConnection> = OnceCell::new();
 pub async fn setup_database_connection(
     database_url: &str,
     db_config: &Option<DbConfig>,
-) -> anyhow::Result<()> {
-    match connect_to_database(database_url, db_config.clone()).await {
-        Ok(db) => {
-            DATABASE.set(db).expect("Database already set");
-            Ok(())
-        }
-        Err(err) => {
-            println!("Database connection error: {err}");
-            std::process::exit(1);
-        }
-    }
-}
-
-pub fn get_database() -> &'static DatabaseConnection {
-    DATABASE.get().expect("Database not set")
+) -> Result<DatabaseConnection, DbErr> {
+    connect_to_database(database_url, db_config.clone()).await
 }
 
 async fn connect_to_database(

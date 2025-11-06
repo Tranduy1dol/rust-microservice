@@ -1,5 +1,3 @@
-use std::sync::LazyLock;
-
 use chrono::Utc;
 use entities::admin::{
     ActiveModel as AdminActiveModel, Column, Entity as Admin, Model as AdminModel, Model,
@@ -10,23 +8,15 @@ use sea_orm::{
     ColumnTrait, DatabaseConnection, DbErr, EntityTrait, QueryFilter,
 };
 
-use crate::{database::get_database, errors::Error};
+use crate::errors::Error;
 
 pub struct AdminRepository {
     database: DatabaseConnection,
 }
 
-impl Default for AdminRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl AdminRepository {
-    pub fn new() -> Self {
-        Self {
-            database: get_database().to_owned(),
-        }
+    pub fn new(database: DatabaseConnection) -> Self {
+        Self { database }
     }
 
     pub async fn create_new_admin(
@@ -92,5 +82,3 @@ impl AdminRepository {
             })
     }
 }
-
-pub static ADMIN_REPOSITORY: LazyLock<AdminRepository> = LazyLock::new(AdminRepository::new);

@@ -1,34 +1,22 @@
-use std::sync::LazyLock;
-
 use chrono::Utc;
 use entities::product::{
     ActiveModel as ProductActiveModel, Column, Entity as Product, Model as ProductModel,
 };
 use rust_decimal::Decimal;
+use sea_orm::QueryFilter;
 use sea_orm::{
-    ColumnTrait, DatabaseConnection, EntityTrait, NotSet, PaginatorTrait, QueryFilter, QueryOrder,
-    Set,
+    ColumnTrait, DatabaseConnection, EntityTrait, NotSet, PaginatorTrait, QueryOrder, Set,
 };
 
-use crate::database::get_database;
 use crate::errors::Error;
-use crate::repositories::category_repository::CATEGORY_REPOSITORY;
 
 pub struct ProductRepository {
     database: DatabaseConnection,
 }
 
-impl Default for ProductRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl ProductRepository {
-    pub fn new() -> Self {
-        Self {
-            database: get_database().to_owned(),
-        }
+    pub fn new(database: DatabaseConnection) -> Self {
+        Self { database }
     }
 
     pub async fn create_new_product(
@@ -39,11 +27,7 @@ impl ProductRepository {
         category_id: Option<i64>,
         stock_quantity: i32,
     ) -> Result<ProductModel, Error> {
-        let now = Utc::now().timestamp();
-
-        if let Some(category_id) = category_id {
-            CATEGORY_REPOSITORY.get_category(category_id).await?;
-        }
+        let now = Utc::now().timestamp_millis();
 
         let active_model = ProductActiveModel {
             id: NotSet,
@@ -82,15 +66,11 @@ impl ProductRepository {
         category_id: Option<i64>,
         stock_quantity: Option<i32>,
     ) -> Result<ProductModel, Error> {
-        if let Some(category_id) = category_id {
-            CATEGORY_REPOSITORY.get_category(category_id).await?;
-        }
-
         let mut active_model = ProductActiveModel {
             id: Set(id),
             description: Set(description),
             category_id: Set(category_id),
-            updated_at: Set(Utc::now().timestamp()),
+            updated_at: Set(Utc::now().timestamp_millis()),
             ..Default::default()
         };
 
@@ -117,7 +97,7 @@ impl ProductRepository {
             .one(&self.database)
             .await
             .map_err(Error::from)?
-            .ok_or(Error::not_found(format!("No such product with id {}", id)))
+            .ok_or(Error::not_found(format!("Product {} not found", id)))
     }
 
     pub async fn get_all_products(
@@ -135,14 +115,14 @@ impl ProductRepository {
         Ok((products, num_pages))
     }
 
-    pub async fn search_products_by_name(
+    pub async fn search_products(
         &self,
         query: String,
         page: u64,
         page_size: u64,
     ) -> Result<(Vec<ProductModel>, u64), Error> {
         let paginator = Product::find()
-            .filter(Column::Name.contains(query))
+            .filter(Column::Name.contains(&query))
             .order_by_asc(Column::Name)
             .paginate(&self.database, page_size);
 
@@ -169,5 +149,3 @@ impl ProductRepository {
         Ok((products, num_pages))
     }
 }
-
-pub static PRODUCT_REPOSITORY: LazyLock<ProductRepository> = LazyLock::new(ProductRepository::new);

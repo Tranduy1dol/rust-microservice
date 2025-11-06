@@ -1,29 +1,32 @@
 use axum::{
+    extract::State,
     routing::{patch, post},
     Json, Router,
 };
 
 use crate::{
+    app::AppState,
     auth::jwt::generate_jwt_token,
     config::JWT_CONFIG,
     errors::Error,
-    repositories::admin_repository::ADMIN_REPOSITORY,
     routes::admin::dtos::{
         AdminLoginRequestDto, AdminLoginResponseDto, AdminResponseDto, CreateAdminRequestDto,
         UpdateAdminLevelRequestDto,
     },
 };
 
-pub fn create_route() -> Router {
+pub fn create_route() -> Router<AppState> {
     Router::new()
         .route("/", post(create_admin))
         .route("/level", patch(update_admin_level))
 }
 
 pub async fn create_admin(
+    State(state): State<AppState>,
     Json(request): Json<CreateAdminRequestDto>,
 ) -> Result<Json<AdminResponseDto>, Error> {
-    match ADMIN_REPOSITORY
+    match state
+        .admin_repo
         .create_new_admin(request.name, request.email, request.password)
         .await
     {
@@ -38,9 +41,11 @@ pub async fn create_admin(
 }
 
 pub async fn update_admin_level(
+    State(state): State<AppState>,
     Json(request): Json<UpdateAdminLevelRequestDto>,
 ) -> Result<Json<AdminResponseDto>, Error> {
-    match ADMIN_REPOSITORY
+    match state
+        .admin_repo
         .update_admin_level(request.email, request.level)
         .await
     {
@@ -55,9 +60,10 @@ pub async fn update_admin_level(
 }
 
 pub async fn admin_login(
+    State(state): State<AppState>,
     Json(request): Json<AdminLoginRequestDto>,
 ) -> Result<Json<AdminLoginResponseDto>, Error> {
-    let admin = ADMIN_REPOSITORY.get_admin_by_email(request.email).await?;
+    let admin = state.admin_repo.get_admin_by_email(request.email).await?;
     match bcrypt::verify(&request.password, admin.password_hash.as_str()) {
         Ok(success) => {
             if success {

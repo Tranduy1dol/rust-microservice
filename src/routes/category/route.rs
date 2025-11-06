@@ -1,16 +1,14 @@
 use axum::{
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     routing::{delete, get, patch, post},
     Json, Router,
 };
 use chrono::Utc;
 
 use crate::{
+    app::AppState,
     auth::admin::{AdminAuth, AdminScopes, RouteState},
     errors::Error,
-    repositories::{
-        category_repository::CATEGORY_REPOSITORY, product_repository::PRODUCT_REPOSITORY,
-    },
     routes::{
         category::dtos::{
             request::{CreateCategoryRequestDto, EditCreateCategoryRequestDto},
@@ -21,29 +19,33 @@ use crate::{
     utils::dtos::PaginationDto,
 };
 
-pub fn create_route() -> Router {
-    Router::new()
-        // Route công khai (MỚI)
-        .route("/:id/products", get(get_products_by_category))
-        .route(
-            "/",
-            post(create_category).with_state(RouteState::new(AdminScopes::CategoriesWrite)),
-        )
-        .route(
-            "/",
-            delete(delete_category).with_state(RouteState::new(AdminScopes::CategoriesWrite)),
-        )
-        .route(
-            "/",
-            patch(edit_category).with_state(RouteState::new(AdminScopes::CategoriesWrite)),
-        )
+pub fn create_route() -> Router<AppState> {
+    Router::new().route("/:id/products", get(get_products_by_category))
 }
 
+// pub fn create_admin_route() -> Router {
+//     Router::new()
+//         .route(
+//             "/",
+//             post(create_category).with_state(RouteState::new(AdminScopes::CategoriesWrite)),
+//         )
+//         .route(
+//             "/",
+//             delete(delete_category).with_state(RouteState::new(AdminScopes::CategoriesWrite)),
+//         )
+//         .route(
+//             "/",
+//             patch(edit_category).with_state(RouteState::new(AdminScopes::CategoriesWrite)),
+//         )
+// }
+
 pub async fn create_category(
+    State(state): State<AppState>,
     AdminAuth(_claims): AdminAuth,
     Json(request): Json<CreateCategoryRequestDto>,
 ) -> Result<Json<CategoryResponseDto>, Error> {
-    match CATEGORY_REPOSITORY
+    match state
+        .category_repo
         .create_new_category(request.name, request.description)
         .await
     {
@@ -57,10 +59,11 @@ pub async fn create_category(
 }
 
 pub async fn delete_category(
+    State(state): State<AppState>,
     AdminAuth(_claims): AdminAuth,
     Path(category_id): Path<i64>,
 ) -> Result<Json<DeleteCategoryResponseDto>, Error> {
-    match CATEGORY_REPOSITORY.delete_category(category_id).await {
+    match state.category_repo.delete_category(category_id).await {
         Ok(model) => Ok(Json(DeleteCategoryResponseDto {
             id: model.id,
             deleted_at: Utc::now().timestamp(),
@@ -70,10 +73,12 @@ pub async fn delete_category(
 }
 
 pub async fn edit_category(
+    State(state): State<AppState>,
     AdminAuth(_claims): AdminAuth,
     Json(request): Json<EditCreateCategoryRequestDto>,
 ) -> Result<Json<CategoryResponseDto>, Error> {
-    match CATEGORY_REPOSITORY
+    match state
+        .category_repo
         .update_category(request.id, request.name, request.description)
         .await
     {
@@ -87,11 +92,12 @@ pub async fn edit_category(
 }
 
 pub async fn get_products_by_category(
+    State(state): State<AppState>,
     Path(category_id): Path<i64>,
     Query(pagination): Query<PaginationDto>,
 ) -> Result<Json<Vec<ProductResponseDto>>, Error> {
-    // Gọi hàm từ product_repository
-    let (products, _num_pages) = PRODUCT_REPOSITORY
+    let (products, _num_pages) = state
+        .product_repo
         .get_products_by_category(category_id, pagination.page, pagination.page_size)
         .await?;
 

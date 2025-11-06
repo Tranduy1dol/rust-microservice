@@ -1,13 +1,13 @@
 use axum::{
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     routing::{delete, get, patch, post},
     Json, Router,
 };
 
 use crate::{
+    app::AppState,
     auth::admin::{AdminAuth, AdminScopes, RouteState},
     errors::Error,
-    repositories::product_repository::PRODUCT_REPOSITORY,
     routes::product::dtos::{
         request::{CreateProductRequestDto, EditProductRequestDto, SearchQueryDto},
         response::{DeleteProductRequestDto, ProductResponseDto},
@@ -15,30 +15,36 @@ use crate::{
     utils::dtos::PaginationDto,
 };
 
-pub fn create_routes() -> Router {
+pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/", get(get_all_products))
         .route("/:id", get(get_product_by_id))
         .route("/search", get(search_products))
-        .route(
-            "/",
-            post(create_product).with_state(RouteState::new(AdminScopes::ProductsWrite)),
-        )
-        .route(
-            "/",
-            delete(delete_product).with_state(RouteState::new(AdminScopes::ProductsWrite)),
-        )
-        .route(
-            "/",
-            patch(edit_product_detail).with_state(RouteState::new(AdminScopes::ProductsWrite)),
-        )
 }
 
+// pub fn create_admin_route() -> Router {
+//     Router::new()
+//         .route(
+//             "/",
+//             post(create_product).with_state(RouteState::new(AdminScopes::ProductsWrite)),
+//         )
+//         .route(
+//             "/",
+//             delete(delete_product).with_state(RouteState::new(AdminScopes::ProductsWrite)),
+//         )
+//         .route(
+//             "/",
+//             patch(edit_product_detail).with_state(RouteState::new(AdminScopes::ProductsWrite)),
+//         )
+// }
+
 pub async fn create_product(
+    State(state): State<AppState>,
     AdminAuth(_claims): AdminAuth,
     Json(request): Json<CreateProductRequestDto>,
 ) -> Result<Json<ProductResponseDto>, Error> {
-    match PRODUCT_REPOSITORY
+    match state
+        .product_repo
         .create_new_product(
             request.name,
             request.description,
@@ -62,10 +68,11 @@ pub async fn create_product(
     }
 }
 pub async fn delete_product(
+    State(state): State<AppState>,
     AdminAuth(_claims): AdminAuth,
     Path(product_id): Path<i64>,
 ) -> Result<Json<DeleteProductRequestDto>, Error> {
-    match PRODUCT_REPOSITORY.delete_product_by_id(product_id).await {
+    match state.product_repo.delete_product_by_id(product_id).await {
         Ok(product) => Ok(Json(DeleteProductRequestDto {
             product_id,
             updated_at: product.updated_at,
@@ -74,10 +81,12 @@ pub async fn delete_product(
     }
 }
 pub async fn edit_product_detail(
+    State(state): State<AppState>,
     AdminAuth(_claims): AdminAuth,
     Json(request): Json<EditProductRequestDto>,
 ) -> Result<Json<ProductResponseDto>, Error> {
-    match PRODUCT_REPOSITORY
+    match state
+        .product_repo
         .update_product_detail_by_id(
             request.product_id,
             request.name,
@@ -103,9 +112,11 @@ pub async fn edit_product_detail(
 }
 
 pub async fn get_all_products(
+    State(state): State<AppState>,
     Query(pagination): Query<PaginationDto>,
 ) -> Result<Json<Vec<ProductResponseDto>>, Error> {
-    let (products, _num_pages) = PRODUCT_REPOSITORY
+    let (products, _num_pages) = state
+        .product_repo
         .get_all_products(pagination.page, pagination.page_size)
         .await?;
 
@@ -127,9 +138,10 @@ pub async fn get_all_products(
 }
 
 pub async fn get_product_by_id(
+    State(state): State<AppState>,
     Path(product_id): Path<i64>,
 ) -> Result<Json<ProductResponseDto>, Error> {
-    let model = PRODUCT_REPOSITORY.get_product_by_id(product_id).await?;
+    let model = state.product_repo.get_product_by_id(product_id).await?;
     Ok(Json(ProductResponseDto {
         id: model.id,
         name: model.name,
@@ -143,11 +155,13 @@ pub async fn get_product_by_id(
 }
 
 pub async fn search_products(
+    State(state): State<AppState>,
     Query(query): Query<SearchQueryDto>,
     Query(pagination): Query<PaginationDto>,
 ) -> Result<Json<Vec<ProductResponseDto>>, Error> {
-    let (products, _num_pages) = PRODUCT_REPOSITORY
-        .search_products_by_name(query.q, pagination.page, pagination.page_size)
+    let (products, _num_pages) = state
+        .product_repo
+        .search_products(query.q, pagination.page, pagination.page_size)
         .await?;
 
     let response = products

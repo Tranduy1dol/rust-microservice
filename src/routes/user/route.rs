@@ -1,13 +1,14 @@
 use axum::{
+    extract::State,
     routing::{get, post},
     Json, Router,
 };
 
 use crate::{
+    app::AppState,
     auth::jwt::{generate_jwt_token, Auth},
     config::JWT_CONFIG,
     errors::Error,
-    repositories::user_repository::USER_REPOSITORY,
     routes::user::dtos::{
         request::{LoginRequestDto, RegisterRequestDto, ResetPasswordRequestDto},
         response::{
@@ -16,7 +17,8 @@ use crate::{
         },
     },
 };
-pub fn create_route() -> Router {
+
+pub fn create_route() -> Router<AppState> {
     Router::new()
         .route("/register", post(register))
         .route("/login", post(login))
@@ -25,9 +27,11 @@ pub fn create_route() -> Router {
 }
 
 pub async fn register(
+    State(state): State<AppState>,
     Json(request): Json<RegisterRequestDto>,
 ) -> Result<Json<RegisterResponseDto>, Error> {
-    match USER_REPOSITORY
+    match state
+        .user_repo
         .create_new_user(
             request.user_name,
             request.email,
@@ -46,14 +50,16 @@ pub async fn register(
     }
 }
 
-pub async fn login(Json(request): Json<LoginRequestDto>) -> Result<Json<LoginResponseDto>, Error> {
-    let user = USER_REPOSITORY.get_user_by_email(request.email).await?;
+pub async fn login(
+    State(state): State<AppState>,
+    Json(request): Json<LoginRequestDto>,
+) -> Result<Json<LoginResponseDto>, Error> {
+    let user = state.user_repo.get_user_by_email(request.email).await?;
     match bcrypt::verify(&request.password, user.password_hash.as_str()) {
         Ok(result) => {
             if result {
                 let token =
-                    generate_jwt_token(user.id, &user.email, &user.username, None, &JWT_CONFIG)
-                        .unwrap();
+                    generate_jwt_token(user.id, &user.email, &user.username, None, &JWT_CONFIG)?;
 
                 Ok(Json(LoginResponseDto {
                     user_id: user.id,
@@ -67,8 +73,11 @@ pub async fn login(Json(request): Json<LoginRequestDto>) -> Result<Json<LoginRes
     }
 }
 
-pub async fn profile(Auth(claim): Auth) -> Result<Json<GetUserProfileResponseDto>, Error> {
-    match USER_REPOSITORY.get_user_by_email(claim.email).await {
+pub async fn profile(
+    State(state): State<AppState>,
+    Auth(claim): Auth,
+) -> Result<Json<GetUserProfileResponseDto>, Error> {
+    match state.user_repo.get_user_by_email(claim.email).await {
         Ok(user) => Ok(Json(GetUserProfileResponseDto {
             user_id: user.id,
             email: user.email,
@@ -83,16 +92,19 @@ pub async fn profile(Auth(claim): Auth) -> Result<Json<GetUserProfileResponseDto
 }
 
 pub async fn reset_password(
+    State(state): State<AppState>,
     Auth(claim): Auth,
     Json(request): Json<ResetPasswordRequestDto>,
 ) -> Result<Json<ResetPasswordResponseDto>, Error> {
-    let user = USER_REPOSITORY
+    let user = state
+        .user_repo
         .get_user_by_email(claim.email.clone())
         .await?;
     match bcrypt::verify(&request.current_password, user.password_hash.as_str()) {
         Ok(result) => {
             if result {
-                USER_REPOSITORY
+                state
+                    .user_repo
                     .update_user_password(claim.email, request.new_password)
                     .await?;
 

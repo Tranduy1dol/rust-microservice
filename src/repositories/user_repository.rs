@@ -1,30 +1,21 @@
-use std::sync::LazyLock;
-
 use chrono::Utc;
 use entities::user::{
     ActiveModel as UserActiveModel, Column, Entity as User, Model as UserModel, Model,
 };
 use sea_orm::{
     sea_query::Expr, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, NotSet, QueryFilter, Set,
+    TransactionTrait,
 };
 
-use crate::{database::get_database, errors::Error};
+use crate::errors::Error;
 
 pub struct UserRepository {
     database: DatabaseConnection,
 }
 
-impl Default for UserRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl UserRepository {
-    pub fn new() -> Self {
-        Self {
-            database: get_database().to_owned(),
-        }
+    pub fn new(database: DatabaseConnection) -> Self {
+        Self { database }
     }
 
     pub async fn create_new_user(
@@ -62,9 +53,20 @@ impl UserRepository {
             updated_at: Set(now),
         };
 
-        let model = User::insert(active_model)
-            .exec_with_returning(&self.database)
+        let txn = self.database.begin().await?;
+
+        let model = User::insert(active_model).exec_with_returning(&txn).await?;
+        let cart_active_model = entities::cart::ActiveModel {
+            id: NotSet,
+            user_id: Set(model.id),
+            created_at: Set(now),
+            updated_at: Set(now),
+        };
+        entities::cart::Entity::insert(cart_active_model)
+            .exec(&txn)
             .await?;
+
+        txn.commit().await?;
 
         Ok(model)
     }
@@ -104,5 +106,3 @@ impl UserRepository {
             .ok_or(Error::from(DbErr::Custom("User not found!".to_string())))
     }
 }
-
-pub static USER_REPOSITORY: LazyLock<UserRepository> = LazyLock::new(UserRepository::new);

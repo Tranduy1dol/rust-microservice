@@ -1,28 +1,17 @@
-use std::sync::LazyLock;
-
 use entities::category::{
     ActiveModel as CategoryActiveModel, Entity as Category, Model as CategoryModel,
 };
 use sea_orm::{DatabaseConnection, EntityTrait, NotSet, Set};
 
-use crate::database::get_database;
 use crate::errors::Error;
 
 pub struct CategoryRepository {
     database: DatabaseConnection,
 }
 
-impl Default for CategoryRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl CategoryRepository {
-    pub fn new() -> Self {
-        Self {
-            database: get_database().to_owned(),
-        }
+    pub fn new(database: DatabaseConnection) -> Self {
+        Self { database }
     }
 
     pub async fn create_new_category(
@@ -87,6 +76,3 @@ impl CategoryRepository {
             .ok_or(Error::not_found(format!("Category {} not found", id)))
     }
 }
-
-pub static CATEGORY_REPOSITORY: LazyLock<CategoryRepository> =
-    LazyLock::new(CategoryRepository::new);

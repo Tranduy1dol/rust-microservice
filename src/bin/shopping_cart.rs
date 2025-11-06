@@ -1,7 +1,8 @@
 use std::net::SocketAddr;
 
 use clap::{CommandFactory, Parser, Subcommand};
-use shopping_cart::app::create_app;
+
+use shopping_cart::app::{create_app, AppState};
 use shopping_cart::config::APP_CONFIG;
 
 #[derive(Parser, Debug)]
@@ -29,7 +30,9 @@ async fn main() -> anyhow::Result<()> {
 
     match args.command {
         Some(Command::Start) => {
-            let app = create_app().await;
+            let app_state = AppState::new(APP_CONFIG.database_url.as_str(), &None).await?;
+
+            let app = create_app(app_state).await;
             let address = format!("0.0.0.0:{}", APP_CONFIG.port);
 
             let listener = tokio::net::TcpListener::bind(address).await?;
