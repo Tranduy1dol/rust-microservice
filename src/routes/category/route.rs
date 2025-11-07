@@ -20,7 +20,7 @@ use crate::{
 };
 
 pub fn create_route() -> Router<AppState> {
-    Router::new().route("/:id/products", get(get_products_by_category))
+    Router::new().route("/{id}/products", get(get_products_by_category))
 }
 
 // pub fn create_admin_route() -> Router {

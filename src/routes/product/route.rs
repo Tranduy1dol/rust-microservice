@@ -18,7 +18,7 @@ use crate::{
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/", get(get_all_products))
-        .route("/:id", get(get_product_by_id))
+        .route("/{id}", get(get_product_by_id))
         .route("/search", get(search_products))
 }
 

@@ -31,8 +31,8 @@ impl UserRepository {
         if User::find()
             .filter(Column::Email.eq(email.clone()))
             .one(&self.database)
-            .await
-            .is_ok()
+            .await?
+            .is_some()
         {
             return Err(Error::from(DbErr::Custom(
                 "User already exists!".to_string(),
