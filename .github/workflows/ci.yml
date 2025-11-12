@@ -4,6 +4,11 @@ on:
   pull_request:
     branches:
       - develop
+      - main
+  push:
+    branches:
+      - develop
+      - main
 jobs:
   cargo-check:
     name: Cargo check
@@ -77,7 +82,8 @@ jobs:
       - name: Run tests with coverage
         run: cargo tarpaulin --all-features --workspace --verbose --tests --skip-clean --out xml
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./cobertura.xml
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}

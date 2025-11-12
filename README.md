@@ -1,4 +1,6 @@
 # Shopping Cart Microservice
+[![codecov](https://codecov.io/gh/tranduy1dol/rust-microservice/branch/develop/graph/badge.svg)](https://codecov.io/gh/tranduy1dol/rust-microservice)
+
 
 ## Description
 
