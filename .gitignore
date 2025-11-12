@@ -1,12 +1,7 @@
 # IDE configuration file
 /.idea
 
-# Environment variables
-/.env
-/e2e-tests/.env
-
 # Target files
-/migration/target
-/entities/target
-/e2e-tests/target
 /target
+/crates/entities/target
+/crates/migration/target

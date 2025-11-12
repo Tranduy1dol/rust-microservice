@@ -4,39 +4,63 @@
 
 ---
 
-This repository implements simple RESTful API for an e-commerce application contain service for seller. Another feature for billing and buyer will be implemented in the future
-
-## Assignment requirements
+## Structure
 
 ---
 
-| **Basic functionality**                                                      |                                               |
-|------------------------------------------------------------------------------|-----------------------------------------------|
-| Incorporating descriptive comments to enhance code readability.              | <span style="color:green">Done</span>         |
-| Implementing tracing mechanisms for effective debugging.                     | <span style="color:green">Done</span>         |
-| Writing comprehensive test cases to validate functionality.                  | <span style="color:yellow">Almost Done</span> |
-| Utilizing version control with Git for code management.                      | <span style="color:green">Done</span>         |
-| Structuring code in a logical and maintainable manner.                       | <span style="color:green">Done</span>         |
-| Containerizing the application using Docker for portability and scalability. | <span style="color:green">Done</span>         |
-| **Advance functionality**                                                    |                                               |
-| Load Configuration from a File                                               | <span style="color:yellow">Almost Done</span> |
-| Multiple Implementations                                                     | <span style="color:red">Not yet</span>        |
-| Advanced Tracing                                                             | <span style="color:red">Not yet</span>        |
-| CI/CD                                                                        | <span style="color:red">Not yet</span>        |
-| Docker Image Optimization                                                    | <span style="color:red">Not yet</span>        |
-
-### Improvement
-
----
-
-Because this is just a simple repository, that mean there are a lot feature can be set up in the future. Some suggestion feature:
-
-- Implement feature for buyer and bill.
-- Implement middleware for admin so that admin can delete bad accounts.
-- Optimization Docker image.
-- Add CI/CD pipeline for auto build, deploy and test.
-- Implement front-end.
-
+```
+shopping_cart/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── config/
+│   ├── default.toml
+│   └── production.toml
+│
+├── crates/
+│   │
+│   ├── app/
+│   │   ├── src/
+│   │   │   ├── main.rs
+│   │   │   ├── state.rs
+│   │   │   ├── router.rs
+│   │   │   ├── handlers/
+│   │   │   ├── worker.rs
+│   │   │   ├── config.rs
+│   │   │   ├── error.rs
+│   │   │   └── middleware/
+│   │   └── Cargo.toml
+│   │
+│   ├── core/
+│   │   ├── src/
+│   │   │   ├── lib.rs
+│   │   │   ├── events.rs
+│   │   │   ├── ports/
+│   │   │   └── services/
+│   │   └── Cargo.toml
+│   │
+│   ├── infrastructure/
+│   │   ├── src/
+│   │   │   ├── lib.rs
+│   │   │   ├── database/
+│   │   │   └── cache/
+│   │   └── Cargo.toml
+│   │
+│   ├── entities/
+│   └── migration/
+│
+├── tests/
+│   ├── common.rs
+│   ├── user_api.rs
+│   ├── cart_api.rs
+│   └── order_api.rs
+│
+├── .gitignore
+├── Cargo.toml
+├── docker-compose.yml
+└── Dockerfile
+```
 
 # Feature List
 
@@ -46,8 +70,8 @@ This list is structured around the capabilities your backend service would need 
 ## 👤 User & Auth Service
 
 ---
-- [x] Core: User registration, login (e.g., with JWT tokens), password reset, and profile management.
-- [x] Data: Manages user data, addresses, and authentication.
+- [ ] Core: User registration, login (e.g., with JWT tokens), password reset, and profile management.
+- [ ] Data: Manages user data, addresses, and authentication.
 
 ## 📦 Product Catalog Service
 
@@ -74,10 +98,3 @@ This list is structured around the capabilities your backend service would need 
 ---
 - [ ] Reviews: Allow authenticated users to submit reviews (rating and text) for products they've purchased. Fetch all reviews for a given product.
 - [ ] Wishlist: Enable users to add or remove products from a personal wishlist.
-
-# TODO List
-
----
-- [ ] Implement feature lists.
-- [ ] Implement e2e test & benchmark test.
-- [ ] Add a CI/CD pipeline for auto build, deploy and test.
