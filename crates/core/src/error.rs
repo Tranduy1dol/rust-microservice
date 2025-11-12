@@ -32,7 +32,7 @@ pub enum Error {
     Jsonwebtoken(#[from] jsonwebtoken::errors::Error),
 
     #[error("{0}")]
-    Validator(#[from] validator::ValidationErrors),
+    Validation(#[from] validator::ValidationErrors),
 }
 
 impl Error {
@@ -52,6 +52,23 @@ impl Error {
         Self::BadRequest(BadRequest { message })
     }
 
+    /// Map an `Error` variant to an HTTP status code and an application-specific numeric error code.
+    ///
+    /// # Returns
+    ///
+    /// `(StatusCode, u16)` where the first element is the HTTP status code and the second is the application-specific numeric error code.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use axum::http::StatusCode;
+    /// use crate::error::Error;
+    ///
+    /// let err = Error::bad_request("invalid input".to_string());
+    /// let (status, code) = err.get_codes();
+    /// assert_eq!(status, StatusCode::BAD_REQUEST);
+    /// assert_eq!(code, 10002);
+    /// ```
     fn get_codes(&self) -> (StatusCode, u16) {
         match self {
             Error::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10001),
@@ -61,7 +78,7 @@ impl Error {
             Error::HashPassword(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10005),
             Error::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10006),
             Error::Jsonwebtoken(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10007),
-            Error::Validator(_) => (StatusCode::BAD_REQUEST, 10008),
+            Error::Validation(_) => (StatusCode::BAD_REQUEST, 10008),
         }
     }
 }
