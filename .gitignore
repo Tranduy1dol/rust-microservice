@@ -5,3 +5,5 @@
 /target
 /crates/entities/target
 /crates/migration/target
+
+.env
