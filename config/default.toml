@@ -1,1 +1,16 @@
+[server]
+port = 8080
+allowed_origin = "http://localhost:3000"
 
+[database]
+url = "postgres://postgres:password@localhost:5432/shopping_cart"
+
+[redis]
+url = "redis://127.0.0.1:6379"
+
+[jwt]
+secret = "day-la-secret-key-mac-dinh-rat-yeu-can-thay-doi"
+expires_in_hours = 24
+
+[log]
+level = "debug"

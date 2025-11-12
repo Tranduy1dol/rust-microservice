@@ -32,7 +32,7 @@ pub enum Error {
     Jsonwebtoken(#[from] jsonwebtoken::errors::Error),
 
     #[error("{0}")]
-    Validator(#[from] validator::ValidationErrors),
+    Validation(#[from] validator::ValidationErrors),
 }
 
 impl Error {
@@ -61,7 +61,7 @@ impl Error {
             Error::HashPassword(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10005),
             Error::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10006),
             Error::Jsonwebtoken(_) => (StatusCode::INTERNAL_SERVER_ERROR, 10007),
-            Error::Validator(_) => (StatusCode::BAD_REQUEST, 10008),
+            Error::Validation(_) => (StatusCode::BAD_REQUEST, 10008),
         }
     }
 }
