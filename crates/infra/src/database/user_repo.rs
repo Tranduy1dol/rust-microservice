@@ -54,10 +54,10 @@ impl UserRepository for SeaOrmUserRepo {
         last_name: String,
         address: String,
     ) -> Result<user::Model, Error> {
-        let txn =
-            self.db.begin().await.map_err(|_| {
-                Error::internal("Database failed to start transaction.".to_string())
-            })?;
+        let txn = self.db.begin().await.map_err(|e| {
+            tracing::error!("Failed to start transaction: {}", e);
+            Error::internal("Database failed to start transaction.".to_string())
+        })?;
 
         let new_user = user::ActiveModel {
             username: Set(user_name),
@@ -68,22 +68,24 @@ impl UserRepository for SeaOrmUserRepo {
             address: Set(address),
             ..Default::default()
         };
-        let user_model = new_user
-            .insert(&txn)
-            .await
-            .map_err(|_| Error::internal("Database failed to insert user".to_string()))?;
+        let user_model = new_user.insert(&txn).await.map_err(|e| {
+            tracing::error!("Failed to insert user: {}", e);
+            Error::internal("Database failed to insert user".to_string())
+        })?;
 
         let new_cart = cart::ActiveModel {
             user_id: Set(user_model.id),
             ..Default::default()
         };
-        new_cart.insert(&txn).await.map_err(|_| {
+        new_cart.insert(&txn).await.map_err(|e| {
+            tracing::error!("Failed to insert cart: {}", e);
             Error::internal("Database failed to insert user's new cart".to_string())
         })?;
 
-        txn.commit()
-            .await
-            .map_err(|_| Error::internal("Database failed to commit transaction".to_string()))?;
+        txn.commit().await.map_err(|e| {
+            tracing::error!("Database failed to commit transaction: {}", e);
+            Error::internal(format!("Database failed to commit transaction: {}", e))
+        })?;
 
         Ok(user_model)
     }
@@ -109,7 +111,10 @@ impl UserRepository for SeaOrmUserRepo {
             .filter(user::Column::Email.eq(email))
             .one(&self.db)
             .await
-            .map_err(|_| Error::internal("Internal error".to_string()))?
+            .map_err(|e| {
+                tracing::error!("Database query failed: {}", e);
+                Error::internal("Internal error".to_string())
+            })?
             .ok_or(Error::not_found("User not found".to_string()))
     }
 

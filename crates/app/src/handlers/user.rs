@@ -45,7 +45,15 @@ pub async fn register(
 ) -> impl IntoResponse {
     match state.user_service.register(payload).await {
         Ok(user) => (StatusCode::CREATED, Json(json!({"userId": user.id}))).into_response(),
-        Err(e) => (StatusCode::BAD_REQUEST, e.to_string()).into_response(),
+        Err(e) => {
+            // Log the detailed error for debugging
+            tracing::error!("Registration failed: {}", e);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(json!({"error": "Registration failed"})),
+            )
+                .into_response()
+        }
     }
 }
 
@@ -70,6 +78,14 @@ pub async fn login(
 ) -> impl IntoResponse {
     match state.user_service.login(payload).await {
         Ok(token) => (StatusCode::OK, Json(json!({"token": token}))).into_response(),
-        Err(e) => (StatusCode::UNAUTHORIZED, e.to_string()).into_response(),
+        Err(e) => {
+            // Log the detailed error for debugging
+            tracing::error!("Login failed: {}", e);
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(json!({"error": "Invalid credentials"})),
+            )
+                .into_response()
+        }
     }
 }

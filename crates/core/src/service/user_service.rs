@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
+use chrono::{Duration, Utc};
 use entities::user;
+use jsonwebtoken::{encode, EncodingKey, Header};
+use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::{
@@ -9,23 +12,37 @@ use crate::{
     ports::user_repo::UserRepository,
 };
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    sub: i64,
+    exp: usize,
+    iat: usize,
+}
+
 pub struct UserService {
     user_repo: Arc<dyn UserRepository>,
+    jwt_secret: String,
 }
 
 impl UserService {
-    /// Creates a new UserService that uses the provided user repository.
+    /// Creates a new UserService that uses the provided user repository and JWT secret.
     ///
     /// # Examples
     ///
     /// ```
     /// use std::sync::Arc;
+    /// # use crates_core::service::UserService;
+    /// # use crates_core::repository::InMemoryUserRepo;
     /// // `repo` must implement `UserRepository`.
-    /// // let repo: Arc<dyn UserRepository> = Arc::new(MyUserRepo::new());
-    /// // let svc = UserService::new(repo);
+    /// let repo = Arc::new(InMemoryUserRepo::default());
+    /// let jwt_secret = "your-jwt-secret".to_string();
+    /// let svc = UserService::new(repo, jwt_secret);
     /// ```
-    pub fn new(user_repo: Arc<dyn UserRepository>) -> Self {
-        Self { user_repo }
+    pub fn new(user_repo: Arc<dyn UserRepository>, jwt_secret: String) -> Self {
+        Self {
+            user_repo,
+            jwt_secret,
+        }
     }
 
     /// Register a new user from the provided registration data.
@@ -45,7 +62,7 @@ impl UserService {
     /// # use crates_core::repository::InMemoryUserRepo;
     /// // Construct service with a repository and call register.
     /// let repo = Arc::new(InMemoryUserRepo::default());
-    /// let svc = UserService::new(repo);
+    /// let svc = UserService::new(repo, "secret".to_string());
     /// let dto = RegisterUserDto {
     ///     user_name: "alice".to_string(),
     ///     email: "alice@example.com".to_string(),
@@ -62,16 +79,26 @@ impl UserService {
     pub async fn register(&self, dto: RegisterUserDto) -> Result<user::Model, Error> {
         dto.validate()?;
 
-        let password_hash = bcrypt::hash(dto.password, bcrypt::DEFAULT_COST)?;
+        let RegisterUserDto {
+            user_name,
+            email,
+            password,
+            first_name,
+            last_name,
+            address,
+            ..
+        } = dto;
+
+        let password_hash = bcrypt::hash(password, bcrypt::DEFAULT_COST)?;
 
         self.user_repo
             .create_new(
-                dto.user_name,
-                dto.email,
+                user_name,
+                email,
                 password_hash,
-                dto.first_name,
-                dto.last_name,
-                dto.address,
+                first_name,
+                last_name,
+                address,
             )
             .await
     }
@@ -88,7 +115,7 @@ impl UserService {
     /// // let service = /* UserService instance */;
     /// // let dto = /* LoginDto with email and password */;
     /// // let token = block_on(service.login(dto)).unwrap();
-    /// // assert_eq!(token, "temp_jwt_token".to_string());
+    /// // assert!(!token.is_empty());
     /// ```
     pub async fn login(&self, dto: LoginDto) -> Result<String, Error> {
         let user = self.user_repo.get_by_email(dto.email).await?;
@@ -99,7 +126,26 @@ impl UserService {
             return Err(Error::unauthorized("Invalid credentials".to_string()));
         }
 
-        let token = "temp_jwt_token".to_string();
+        if self.jwt_secret.is_empty() {
+            return Err(Error::internal("JWT secret is not configured".to_string()));
+        }
+
+        let now = Utc::now();
+        let iat = now.timestamp() as usize;
+        let exp = (now + Duration::hours(24)).timestamp() as usize;
+
+        let claims = Claims {
+            sub: user.id,
+            iat,
+            exp,
+        };
+
+        let token = encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(self.jwt_secret.as_ref()),
+        )
+        .map_err(|e| Error::internal(format!("Failed to create JWT token: {}", e)))?;
 
         Ok(token)
     }

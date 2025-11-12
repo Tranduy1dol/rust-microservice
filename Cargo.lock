@@ -111,6 +111,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "tracing-subscriber",
 ]
 
@@ -121,6 +122,7 @@ dependencies = [
  "async-trait",
  "axum",
  "bcrypt",
+ "chrono",
  "entities",
  "http",
  "jsonwebtoken",
@@ -1548,6 +1550,7 @@ dependencies = [
  "chrono",
  "entities",
  "sea-orm",
+ "tracing",
 ]
 
 [[package]]

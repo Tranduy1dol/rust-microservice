@@ -16,7 +16,9 @@ pub mod user_repo;
 /// // use `conn`...
 /// # };
 /// ```
-pub async fn create_connection_pool(url: &str) -> sea_orm::DatabaseConnection {
+pub async fn create_connection_pool(
+    url: &str,
+) -> Result<sea_orm::DatabaseConnection, sea_orm::DbErr> {
     let opt = ConnectOptions::new(url);
-    Database::connect(opt).await.unwrap()
+    Database::connect(opt).await
 }
