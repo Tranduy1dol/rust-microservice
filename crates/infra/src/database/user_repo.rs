@@ -11,6 +11,15 @@ pub struct SeaOrmUserRepo {
 }
 
 impl SeaOrmUserRepo {
+    /// Constructs a new SeaOrmUserRepo that wraps the given database connection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use infra::database::user_repo::SeaOrmUserRepo;
+    /// let db: sea_orm::DatabaseConnection = /* obtain or mock a DatabaseConnection */ unimplemented!();
+    /// let repo = SeaOrmUserRepo::new(db);
+    /// ```
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
@@ -18,6 +27,24 @@ impl SeaOrmUserRepo {
 
 #[async_trait]
 impl UserRepository for SeaOrmUserRepo {
+    /// Create a new user and an associated empty cart within a single database transaction.
+    ///
+    /// On success returns the created user model.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// // `repo` is a SeaOrmUserRepo instance connected to a DatabaseConnection.
+    /// let created = repo.create_new(
+    ///     "alice".to_string(),
+    ///     "alice@example.com".to_string(),
+    ///     "hashed_password".to_string(),
+    ///     "Alice".to_string(),
+    ///     "Smith".to_string(),
+    ///     "123 Main St".to_string(),
+    /// ).await.unwrap();
+    /// assert_eq!(created.email, "alice@example.com");
+    /// ```
     async fn create_new(
         &self,
         user_name: String,
@@ -61,6 +88,22 @@ impl UserRepository for SeaOrmUserRepo {
         Ok(user_model)
     }
 
+    /// Finds a user by email.
+    ///
+    /// Returns the matching `user::Model` when a user with the specified email exists;
+    /// returns `Err(Error::not_found)` if no such user exists, or `Err(Error::internal)` if the database query fails.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// // inside an async context
+    /// let repo: SeaOrmUserRepo = /* created elsewhere */;
+    /// let result = repo.get_by_email("alice@example.com".to_string()).await;
+    /// match result {
+    ///     Ok(user) => println!("Found user: {}", user.username),
+    ///     Err(e) => eprintln!("Error: {:?}", e),
+    /// }
+    /// ```
     async fn get_by_email(&self, email: String) -> Result<user::Model, Error> {
         User::find()
             .filter(user::Column::Email.eq(email))
@@ -70,6 +113,19 @@ impl UserRepository for SeaOrmUserRepo {
             .ok_or(Error::not_found("User not found".to_string()))
     }
 
+    /// Updates the stored password hash and `UpdatedAt` timestamp for a user and returns the updated user record.
+    ///
+    /// On success returns the updated `user::Model`. Returns an `Error` if the user does not exist or if a database error occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// # async fn example() {
+    /// let repo = /* SeaOrmUserRepo::new(db) */;
+    /// let updated = repo.update_password(42, "new_hash".to_string()).await.unwrap();
+    /// assert_eq!(updated.id, 42);
+    /// # }
+    /// ```
     async fn update_password(
         &self,
         user_id: i64,

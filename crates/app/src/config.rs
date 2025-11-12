@@ -49,6 +49,23 @@ pub struct LogConfig {
 }
 
 impl Config {
+    /// Load application configuration by merging default and production TOML files and environment variables.
+    ///
+    /// This initializes dotenv, then merges `config/default.toml`, `config/production.toml` (as nested),
+    /// and environment variables prefixed with `APP_` (split by `__`) into a `Config` value.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(Config)` with the merged configuration on success, `Err(figment::Error)` if loading or deserialization fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Load configuration and panic on failure in examples/tests
+    /// let cfg = crate::config::Config::new().unwrap();
+    /// // access a field to illustrate usage
+    /// let _port = cfg.server.port;
+    /// ```
     #[allow(clippy::result_large_err)]
     pub fn new() -> Result<Self, figment::Error> {
         dotenv::dotenv().ok();
@@ -63,6 +80,16 @@ impl Config {
 }
 
 impl Default for Config {
+    /// Creates a `Config` by loading configuration from the default TOML, optional production TOML, and environment variables; panics if loading fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Requires `Config` to be in scope:
+    /// let cfg = Config::default();
+    /// // Use the loaded configuration
+    /// let _port = cfg.server.port;
+    /// ```
     fn default() -> Self {
         Self::new().expect("Failed to load configuration")
     }
