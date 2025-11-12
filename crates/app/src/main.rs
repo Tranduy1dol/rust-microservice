@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use app_core::service::user_service::UserService;
+use app_core::tracing::init_standard_tracing;
 use infra::database::{create_connection_pool, user_repo::SeaOrmUserRepo};
 
 use crate::config::Config;
@@ -30,9 +31,16 @@ mod state;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let config = Config::new()?;
+
+    init_standard_tracing(
+        env!("CARGO_CRATE_NAME"),
+        env!("CARGO_PKG_NAME"),
+        &config.log.level,
+    );
+
     let db_pool = create_connection_pool(&config.database.url).await?;
 
-    tracing_subscriber::fmt().json().init();
+    tracing::info!("Database connected successfully");
 
     let user_repo_adapter = Arc::new(SeaOrmUserRepo::new(db_pool.clone()));
     let user_service = Arc::new(UserService::new(user_repo_adapter, config.jwt.secret));
@@ -40,6 +48,8 @@ async fn main() -> anyhow::Result<()> {
     let app_state = state::AppState { user_service };
     let app = router::create_router(app_state);
     let addr = format!("0.0.0.0:{}", config.server.port);
+
+    tracing::info!("Server listening on addr: {addr}");
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(
