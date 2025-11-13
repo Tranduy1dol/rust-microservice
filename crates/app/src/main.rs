@@ -1,9 +1,12 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use app_core::events::AppEvent;
 use app_core::service::{product_service::ProductService, user_service::UserService};
 use app_core::tracing::init_standard_tracing;
-use infra::database::{create_connection_pool, user_repo::SeaOrmUserRepo, product_repo::SeaOrmProductRepo};
+use infra::database::{
+    create_connection_pool, product_repo::SeaOrmProductRepo, user_repo::SeaOrmUserRepo,
+};
 use tokio::sync::mpsc;
 
 use crate::config::Config;
