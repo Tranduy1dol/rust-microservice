@@ -39,6 +39,45 @@ pub struct UpdateProductDto {
     pub description: Option<String>,
 }
 
+/// Trims leading and trailing whitespace from a deserialized string.
+
+///
+
+/// This helper can be used with serde's `deserialize_with` to ensure string fields
+
+/// are trimmed during deserialization. Deserialization errors are forwarded unchanged.
+
+///
+
+/// # Examples
+
+///
+
+/// ```
+
+/// use serde::Deserialize;
+
+///
+
+/// #[derive(Deserialize, Debug, PartialEq)]
+
+/// struct S {
+
+///     #[serde(deserialize_with = "crate::dto::product_dto::trim_and_sanitize")]
+
+///     q: String,
+
+/// }
+
+///
+
+/// let json = r#"{"q":"  hello world  "}"#;
+
+/// let s: S = serde_json::from_str(json).unwrap();
+
+/// assert_eq!(s.q, "hello world");
+
+/// ```
 fn trim_and_sanitize<'de, D>(deserializer: D) -> Result<String, D::Error>
 where
     D: Deserializer<'de>,
@@ -73,6 +112,18 @@ pub struct ProductResponseDto {
 }
 
 impl From<entities::product::Model> for ProductResponseDto {
+    /// Converts an `entities::product::Model` into a `ProductResponseDto`.
+    ///
+    /// The DTO fields are populated directly from the model's corresponding fields.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Assuming `model` is an `entities::product::Model` instance:
+    /// // let model = entities::product::Model { /* fields */ };
+    /// // let dto = ProductResponseDto::from(model);
+    /// // assert_eq!(dto.id, /* expected id */);
+    /// ```
     fn from(model: entities::product::Model) -> Self {
         Self {
             id: model.id,

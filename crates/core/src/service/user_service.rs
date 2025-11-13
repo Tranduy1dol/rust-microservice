@@ -28,18 +28,24 @@ pub struct UserService {
 }
 
 impl UserService {
-    /// Creates a new UserService that uses the provided user repository and JWT secret.
+    /// Constructs a new UserService with the given repository, JWT signing secret, and event sender.
+    ///
+    /// The service will persist and retrieve users via the repository, sign JWTs using the provided secret,
+    /// and publish application events through the supplied sender.
     ///
     /// # Examples
     ///
     /// ```
     /// use std::sync::Arc;
+    /// use tokio::sync::mpsc;
     /// # use crates_core::service::UserService;
     /// # use crates_core::repository::InMemoryUserRepo;
-    /// // `repo` must implement `UserRepository`.
+    /// # use crates_core::events::AppEvent;
+    ///
     /// let repo = Arc::new(InMemoryUserRepo::default());
     /// let jwt_secret = "your-jwt-secret".to_string();
-    /// let svc = UserService::new(repo, jwt_secret);
+    /// let (tx, _rx) = mpsc::channel::<AppEvent>(8);
+    /// let svc = UserService::new(repo, jwt_secret, tx);
     /// ```
     pub fn new(
         user_repo: Arc<dyn UserRepository>,
@@ -53,9 +59,10 @@ impl UserService {
         }
     }
 
-    /// Register a new user from the provided registration data.
+    /// Register a new user and emit a UserRegistered event.
     ///
-    /// Validates the `RegisterUserDto`, stores a hashed password, and returns the created user model.
+    /// Validates the provided `RegisterUserDto`, hashes the password, persists the new user,
+    /// and attempts to publish a `AppEvent::UserRegistered` via the service's event sender.
     ///
     /// # Returns
     ///
@@ -64,13 +71,18 @@ impl UserService {
     /// # Examples
     ///
     /// ```
-    /// # use std::sync::Arc;
-    /// # use crates_core::service::UserService;
-    /// # use crates_core::dto::RegisterUserDto;
-    /// # use crates_core::repository::InMemoryUserRepo;
-    /// // Construct service with a repository and call register.
+    /// use std::sync::Arc;
+    /// use tokio::sync::mpsc;
+    /// use crates_core::service::UserService;
+    /// use crates_core::dto::RegisterUserDto;
+    /// use crates_core::repository::InMemoryUserRepo;
+    ///
+    /// // create repository and event channel
     /// let repo = Arc::new(InMemoryUserRepo::default());
-    /// let svc = UserService::new(repo, "secret".to_string());
+    /// let (tx, _rx) = mpsc::channel(16);
+    ///
+    /// let svc = UserService::new(repo, "secret".to_string(), tx);
+    ///
     /// let dto = RegisterUserDto {
     ///     user_name: "alice".to_string(),
     ///     email: "alice@example.com".to_string(),
@@ -79,9 +91,11 @@ impl UserService {
     ///     last_name: Some("Example".to_string()),
     ///     address: None,
     /// };
+    ///
     /// let created = tokio::runtime::Runtime::new().unwrap().block_on(async {
     ///     svc.register(dto).await.unwrap()
     /// });
+    ///
     /// assert_eq!(created.user_name, "alice");
     /// ```
     #[tracing::instrument(skip_all, fields(user_email = %dto.email))]
