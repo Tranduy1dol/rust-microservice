@@ -18,10 +18,9 @@ pub fn create_router(state: AppState) -> Router {
     Router::new().nest("/api/v1", api_routes(state))
 }
 
-/// Builds a Router that mounts user-related routes at "/users".
+/// Constructs a Router with `/users` and `/products` sub-routers.
 ///
-/// The returned Router nests the routes produced by `handlers::user::routes(state)`
-/// under the "/users" path.
+/// The returned Router mounts user-related routes at `/users` and product-related routes at `/products`.
 ///
 /// # Examples
 ///
