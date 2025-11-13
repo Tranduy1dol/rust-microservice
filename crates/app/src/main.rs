@@ -1,9 +1,10 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use app_core::service::user_service::UserService;
+use app_core::service::{product_service::ProductService, user_service::UserService};
 use app_core::tracing::init_standard_tracing;
-use infra::database::{create_connection_pool, user_repo::SeaOrmUserRepo};
+use infra::database::{create_connection_pool, user_repo::SeaOrmUserRepo, product_repo::SeaOrmProductRepo};
+use tokio::sync::mpsc;
 
 use crate::config::Config;
 
@@ -11,6 +12,7 @@ mod config;
 pub mod handlers;
 mod router;
 mod state;
+mod worker;
 
 /// Application entry point that bootstraps configuration, database connections, services, routing, and starts the HTTP server.
 ///
@@ -39,13 +41,25 @@ async fn main() -> anyhow::Result<()> {
     );
 
     let db_pool = create_connection_pool(&config.database.url).await?;
-
     tracing::info!("Database connected successfully");
 
-    let user_repo_adapter = Arc::new(SeaOrmUserRepo::new(db_pool.clone()));
-    let user_service = Arc::new(UserService::new(user_repo_adapter, config.jwt.secret));
+    let (event_sender, event_receiver) = mpsc::channel::<AppEvent>(100);
+    tokio::spawn(worker::event_worker(event_receiver));
 
-    let app_state = state::AppState { user_service };
+    let user_repo_adapter = Arc::new(SeaOrmUserRepo::new(db_pool.clone()));
+    let user_service = Arc::new(UserService::new(
+        user_repo_adapter,
+        config.jwt.secret,
+        event_sender,
+    ));
+
+    let product_repo_adapter = Arc::new(SeaOrmProductRepo::new(db_pool.clone()));
+    let product_service = Arc::new(ProductService::new(product_repo_adapter));
+
+    let app_state = state::AppState {
+        user_service,
+        product_service,
+    };
     let app = router::create_router(app_state);
     let addr = format!("0.0.0.0:{}", config.server.port);
 

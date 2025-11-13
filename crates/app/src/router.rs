@@ -30,5 +30,7 @@ pub fn create_router(state: AppState) -> Router {
 /// let router = api_routes(state);
 /// ```
 fn api_routes(state: AppState) -> Router {
-    Router::new().nest("/users", handlers::user::routes(state))
+    Router::new()
+        .nest("/users", handlers::user::routes(state.clone()))
+        .nest("/products", handlers::product::routes(state))
 }

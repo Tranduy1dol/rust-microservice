@@ -12,3 +12,12 @@ pub enum AppEvent {
         total: rust_decimal::Decimal,
     },
 }
+
+impl AppEvent {
+    pub fn name(&self) -> &'static str {
+        match self {
+            AppEvent::UserRegistered { .. } => "UserRegistered",
+            AppEvent::OrderPlaced { .. } => "OrderPlaced",
+        }
+    }
+}

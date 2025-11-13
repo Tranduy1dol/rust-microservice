@@ -1,5 +1,6 @@
 use sea_orm::{ConnectOptions, Database};
 
+pub mod product_repo;
 pub mod user_repo;
 
 /// Creates a database connection pool for the given database URL.

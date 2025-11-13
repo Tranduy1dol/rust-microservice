@@ -20,29 +20,27 @@ pub trait ProductRepository: Send + Sync {
     async fn get_by_category_id(
         &self,
         category_id: i64,
-        page: i64,
-        page_size: i64,
-    ) -> Result<Vec<ProductModel>, Error>;
+        page: u64,
+        page_size: u64,
+    ) -> Result<(Vec<ProductModel>, u64), Error>;
 
-    async fn get_all(&self) -> Result<Vec<ProductModel>, Error>;
-
-    async fn get_for_update(&self, id: i64) -> Result<ProductModel, Error>;
+    async fn get_all(&self, page: u64, page_size: u64) -> Result<(Vec<ProductModel>, u64), Error>;
 
     async fn search_by_query_string(
         &self,
         query_string: String,
-        page: i64,
-        page_size: i64,
-    ) -> Result<Vec<ProductModel>, Error>;
+        page: u64,
+        page_size: u64,
+    ) -> Result<(Vec<ProductModel>, u64), Error>;
 
     async fn update_stock(&self, id: i64, new_quantity: i32) -> Result<ProductModel, Error>;
 
     async fn update_detail_by_id(
         &self,
         id: i64,
-        name: String,
+        name: Option<String>,
         description: Option<String>,
-        price: Decimal,
+        price: Option<Decimal>,
         category_id: Option<i64>,
     ) -> Result<ProductModel, Error>;
 
