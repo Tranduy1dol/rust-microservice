@@ -4,11 +4,13 @@ use chrono::{Duration, Utc};
 use entities::user;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc;
 use validator::Validate;
 
 use crate::{
     dto::user_dto::{LoginDto, RegisterUserDto},
     error::Error,
+    events::AppEvent,
     ports::user_repo::UserRepository,
 };
 
@@ -21,33 +23,46 @@ struct Claims {
 
 pub struct UserService {
     user_repo: Arc<dyn UserRepository>,
+    event_sender: mpsc::Sender<AppEvent>,
     jwt_secret: String,
 }
 
 impl UserService {
-    /// Creates a new UserService that uses the provided user repository and JWT secret.
+    /// Constructs a new UserService with the given repository, JWT signing secret, and event sender.
+    ///
+    /// The service will persist and retrieve users via the repository, sign JWTs using the provided secret,
+    /// and publish application events through the supplied sender.
     ///
     /// # Examples
     ///
     /// ```
     /// use std::sync::Arc;
+    /// use tokio::sync::mpsc;
     /// # use crates_core::service::UserService;
     /// # use crates_core::repository::InMemoryUserRepo;
-    /// // `repo` must implement `UserRepository`.
+    /// # use crates_core::events::AppEvent;
+    ///
     /// let repo = Arc::new(InMemoryUserRepo::default());
     /// let jwt_secret = "your-jwt-secret".to_string();
-    /// let svc = UserService::new(repo, jwt_secret);
+    /// let (tx, _rx) = mpsc::channel::<AppEvent>(8);
+    /// let svc = UserService::new(repo, jwt_secret, tx);
     /// ```
-    pub fn new(user_repo: Arc<dyn UserRepository>, jwt_secret: String) -> Self {
+    pub fn new(
+        user_repo: Arc<dyn UserRepository>,
+        jwt_secret: String,
+        event_sender: mpsc::Sender<AppEvent>,
+    ) -> Self {
         Self {
             user_repo,
             jwt_secret,
+            event_sender,
         }
     }
 
-    /// Register a new user from the provided registration data.
+    /// Register a new user and emit a UserRegistered event.
     ///
-    /// Validates the `RegisterUserDto`, stores a hashed password, and returns the created user model.
+    /// Validates the provided `RegisterUserDto`, hashes the password, persists the new user,
+    /// and attempts to publish a `AppEvent::UserRegistered` via the service's event sender.
     ///
     /// # Returns
     ///
@@ -56,13 +71,18 @@ impl UserService {
     /// # Examples
     ///
     /// ```
-    /// # use std::sync::Arc;
-    /// # use crates_core::service::UserService;
-    /// # use crates_core::dto::RegisterUserDto;
-    /// # use crates_core::repository::InMemoryUserRepo;
-    /// // Construct service with a repository and call register.
+    /// use std::sync::Arc;
+    /// use tokio::sync::mpsc;
+    /// use crates_core::service::UserService;
+    /// use crates_core::dto::RegisterUserDto;
+    /// use crates_core::repository::InMemoryUserRepo;
+    ///
+    /// // create repository and event channel
     /// let repo = Arc::new(InMemoryUserRepo::default());
-    /// let svc = UserService::new(repo, "secret".to_string());
+    /// let (tx, _rx) = mpsc::channel(16);
+    ///
+    /// let svc = UserService::new(repo, "secret".to_string(), tx);
+    ///
     /// let dto = RegisterUserDto {
     ///     user_name: "alice".to_string(),
     ///     email: "alice@example.com".to_string(),
@@ -71,11 +91,14 @@ impl UserService {
     ///     last_name: Some("Example".to_string()),
     ///     address: None,
     /// };
+    ///
     /// let created = tokio::runtime::Runtime::new().unwrap().block_on(async {
     ///     svc.register(dto).await.unwrap()
     /// });
+    ///
     /// assert_eq!(created.user_name, "alice");
     /// ```
+    #[tracing::instrument(skip_all, fields(user_email = %dto.email))]
     pub async fn register(&self, dto: RegisterUserDto) -> Result<user::Model, Error> {
         dto.validate()?;
 
@@ -91,7 +114,8 @@ impl UserService {
 
         let password_hash = bcrypt::hash(password, bcrypt::DEFAULT_COST)?;
 
-        self.user_repo
+        let user = self
+            .user_repo
             .create_new(
                 user_name,
                 email,
@@ -100,7 +124,18 @@ impl UserService {
                 last_name,
                 address,
             )
-            .await
+            .await?;
+
+        let event = AppEvent::UserRegistered {
+            user_id: user.id,
+            email: user.email.clone(),
+        };
+
+        if let Err(e) = self.event_sender.try_send(event) {
+            tracing::error!("Failed to send UserRegistered event: {}", e);
+        }
+
+        Ok(user)
     }
 
     /// Attempts to authenticate a user with the provided credentials and returns an authentication token on success.
