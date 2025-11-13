@@ -5,7 +5,7 @@ pub async fn event_worker(mut rx: mpsc::Receiver<AppEvent>) {
     tracing::info!("Event worker started.");
     while let Some(event) = rx.recv().await {
         let event_span = tracing::info_span!("Processing Event", event_type = event.name());
-        let _ = event_span.enter();
+        let _guard = event_span.enter();
 
         if let AppEvent::UserRegistered { user_id, email } = event {
             tracing::info!(

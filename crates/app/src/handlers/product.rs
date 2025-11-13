@@ -26,20 +26,10 @@ pub async fn create_product(
     State(state): State<AppState>,
     Json(payload): Json<CreateProductDto>,
 ) -> Result<Json<ProductResponseDto>, Error> {
-    match state.product_service.create_new(payload).await {
-        Ok(model) => Ok(Json(ProductResponseDto {
-            id: model.id,
-            name: model.name,
-            description: model.description,
-            price: model.price,
-            stock_quantity: model.stock_quantity,
-            category_id: model.category_id,
-            created_at: model.created_at,
-            updated_at: model.updated_at,
-        })),
-        Err(err) => Err(err),
-    }
+    let model = state.product_service.create_new(payload).await?;
+    Ok(Json(model.into()))
 }
+
 pub async fn delete_product(
     State(state): State<AppState>,
     Path(product_id): Path<i64>,
@@ -56,19 +46,8 @@ pub async fn update_product_detail(
     State(state): State<AppState>,
     Json(payload): Json<UpdateProductDto>,
 ) -> Result<Json<ProductResponseDto>, Error> {
-    match state.product_service.update_detail_by_id(payload).await {
-        Ok(product) => Ok(Json(ProductResponseDto {
-            id: product.id,
-            name: product.name,
-            description: product.description,
-            price: product.price,
-            stock_quantity: product.stock_quantity,
-            category_id: product.category_id,
-            created_at: product.created_at,
-            updated_at: product.updated_at,
-        })),
-        Err(err) => Err(err),
-    }
+    let model = state.product_service.update_detail_by_id(payload).await?;
+    Ok(Json(model.into()))
 }
 
 pub async fn get_all_products(
@@ -79,19 +58,14 @@ pub async fn get_all_products(
 
     let response = products
         .into_iter()
-        .map(|model| ProductResponseDto {
-            id: model.id,
-            name: model.name,
-            description: model.description,
-            price: model.price,
-            stock_quantity: model.stock_quantity,
-            category_id: model.category_id,
-            created_at: model.created_at,
-            updated_at: model.updated_at,
-        })
+        .map(|model| model.into())
         .collect::<Vec<_>>();
 
-    Ok(Json(PaginationResponseDto::new(response, num_pages)))
+    Ok(Json(PaginationResponseDto::new(
+        response,
+        num_pages,
+        pagination.page_size,
+    )))
 }
 
 pub async fn get_product_by_id(
@@ -99,16 +73,7 @@ pub async fn get_product_by_id(
     Path(product_id): Path<i64>,
 ) -> Result<Json<ProductResponseDto>, Error> {
     let model = state.product_service.get_by_id(product_id).await?;
-    Ok(Json(ProductResponseDto {
-        id: model.id,
-        name: model.name,
-        description: model.description,
-        price: model.price,
-        stock_quantity: model.stock_quantity,
-        category_id: model.category_id,
-        created_at: model.created_at,
-        updated_at: model.updated_at,
-    }))
+    Ok(Json(model.into()))
 }
 
 pub async fn get_product_by_category_id(
@@ -123,19 +88,14 @@ pub async fn get_product_by_category_id(
 
     let response = products
         .into_iter()
-        .map(|model| ProductResponseDto {
-            id: model.id,
-            name: model.name,
-            description: model.description,
-            price: model.price,
-            stock_quantity: model.stock_quantity,
-            category_id: model.category_id,
-            created_at: model.created_at,
-            updated_at: model.updated_at,
-        })
+        .map(|model| model.into())
         .collect::<Vec<_>>();
 
-    Ok(Json(PaginationResponseDto::new(response, num_pages)))
+    Ok(Json(PaginationResponseDto::new(
+        response,
+        num_pages,
+        pagination.page_size,
+    )))
 }
 
 pub async fn search_products(
@@ -147,17 +107,12 @@ pub async fn search_products(
 
     let response = products
         .into_iter()
-        .map(|model| ProductResponseDto {
-            id: model.id,
-            name: model.name,
-            description: model.description,
-            price: model.price,
-            stock_quantity: model.stock_quantity,
-            category_id: model.category_id,
-            created_at: model.created_at,
-            updated_at: model.updated_at,
-        })
+        .map(|model| model.into())
         .collect::<Vec<_>>();
 
-    Ok(Json(PaginationResponseDto::new(response, num_pages)))
+    Ok(Json(PaginationResponseDto::new(
+        response,
+        num_pages,
+        pagination.page_size,
+    )))
 }

@@ -18,6 +18,7 @@ impl ProductService {
     }
 
     pub async fn create_new(&self, dto: CreateProductDto) -> Result<product::Model, Error> {
+        dto.validate()?;
         let CreateProductDto {
             name,
             category_id,
@@ -80,6 +81,7 @@ impl ProductService {
         &self,
         dto: UpdateProductDto,
     ) -> Result<product::Model, Error> {
+        dto.validate()?;
         let UpdateProductDto {
             product_id,
             name,

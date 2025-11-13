@@ -1,3 +1,6 @@
+use rust_decimal::Decimal;
+use validator::ValidationError;
+
 /// Validates that a password contains at least one uppercase letter and at least one ASCII digit.
 ///
 /// # Returns
@@ -21,5 +24,13 @@ pub fn validate_password_strength(password: &str) -> Result<(), validator::Valid
         Ok(())
     } else {
         Err(validator::ValidationError::new("password_strength"))
+    }
+}
+
+pub fn validate_price_positive(price: &Decimal) -> Result<(), ValidationError> {
+    if *price > Decimal::ZERO {
+        Ok(())
+    } else {
+        Err(ValidationError::new("price_must_be_positive"))
     }
 }

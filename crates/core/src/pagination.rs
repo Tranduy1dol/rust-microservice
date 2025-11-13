@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-#[derive(Serialize, Debug, Deserialize, Validate)]
+#[derive(Serialize, Debug, Deserialize, Validate, Copy, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Pagination {
     #[serde(default = "default_page")]
@@ -27,15 +27,12 @@ pub struct PaginationResponseDto<T> {
     pub page_size: u64,
 }
 
-impl<T> PaginationResponseDto<T>
-where
-    T: Clone,
-{
-    pub fn new(data: Vec<T>, page: u64) -> Self {
+impl<T> PaginationResponseDto<T> {
+    pub fn new(data: Vec<T>, page: u64, page_size: u64) -> Self {
         Self {
-            data: data.clone(),
+            data,
             page,
-            page_size: data.len() as u64,
+            page_size,
         }
     }
 }
