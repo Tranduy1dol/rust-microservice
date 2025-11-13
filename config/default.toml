@@ -1,11 +1,11 @@
 [server]
-port = 4646
+port = 8080
 allowed_origin = "http://localhost:3000"
 
 [database]
 # Configure via DATABASE_URL environment variable
 # Example: postgres://user:password@localhost:5432/shopping_cart
-url = "postgresql://user:password@localhost:5432/cart"
+url = "${DATABASE_URL}"
 
 [redis]
 url = "redis://127.0.0.1:6379"
@@ -13,7 +13,7 @@ url = "redis://127.0.0.1:6379"
 [jwt]
 # Configure via JWT_SECRET environment variable
 # Generate with: openssl rand -base64 32
-secret = "mXdUS/Ha1bvP4/DnUjGv7XpmYdYRHm+RlcnmC+WtaMY="
+secret = "${JWT_SECRET}"
 expires_in_hours = 24
 
 [log]
