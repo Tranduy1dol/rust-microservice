@@ -125,6 +125,7 @@ dependencies = [
  "entities",
  "http",
  "jsonwebtoken",
+ "lazy_static",
  "regex",
  "rust_decimal",
  "sea-orm",

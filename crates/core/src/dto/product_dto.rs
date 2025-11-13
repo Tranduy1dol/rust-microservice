@@ -1,3 +1,5 @@
+use lazy_static::lazy_static;
+use regex::Regex;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Deserializer, Serialize};
 use validator::Validate;
@@ -45,13 +47,14 @@ where
     Ok(s.trim().to_string())
 }
 
+lazy_static! {
+    static ref SEARCH_QUERY_RE: Regex = Regex::new(r"^[a-zA-Z0-9 ]+$").unwrap();
+}
+
 #[derive(Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchQueryDto {
-    #[validate(regex(
-        path = r#"regex::Regex::new(r"^[a-zA-Z0-9 ]+$").unwrap()"#,
-        message = "Search query can only contain alphanumeric characters and spaces."
-    ))]
+    #[validate(regex(path = *SEARCH_QUERY_RE, message = "Search query can only contain alphanumeric characters and spaces."))]
     #[serde(deserialize_with = "trim_and_sanitize")]
     pub q: String,
 }

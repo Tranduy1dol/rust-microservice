@@ -74,6 +74,12 @@ impl ProductService {
     }
 
     pub async fn update_stock(&self, id: i64, new_quantity: i32) -> Result<product::Model, Error> {
+        if new_quantity < 0 {
+            return Err(Error::bad_request(
+                "Stock quantity cannot be negative".to_string(),
+            ));
+        }
+
         self.product_repo.update_stock(id, new_quantity).await
     }
 
