@@ -39,44 +39,24 @@ pub struct UpdateProductDto {
     pub description: Option<String>,
 }
 
-/// Trims leading and trailing whitespace from a deserialized string.
-
+/// Trim leading and trailing whitespace from a deserialized string.
 ///
-
-/// This helper can be used with serde's `deserialize_with` to ensure string fields
-
-/// are trimmed during deserialization. Deserialization errors are forwarded unchanged.
-
+/// If deserialization fails, the deserialization error is returned unchanged.
 ///
-
 /// # Examples
-
 ///
-
 /// ```
-
 /// use serde::Deserialize;
-
 ///
-
 /// #[derive(Deserialize, Debug, PartialEq)]
-
 /// struct S {
-
 ///     #[serde(deserialize_with = "crate::dto::product_dto::trim_and_sanitize")]
-
 ///     q: String,
-
 /// }
-
 ///
-
 /// let json = r#"{"q":"  hello world  "}"#;
-
 /// let s: S = serde_json::from_str(json).unwrap();
-
 /// assert_eq!(s.q, "hello world");
-
 /// ```
 fn trim_and_sanitize<'de, D>(deserializer: D) -> Result<String, D::Error>
 where

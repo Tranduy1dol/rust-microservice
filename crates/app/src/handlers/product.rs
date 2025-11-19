@@ -198,24 +198,22 @@ pub async fn get_product_by_category_id(
     )))
 }
 
-/// Searches for products matching the given query and returns a paginated list of product DTOs.
+/// Searches products matching the provided query and returns a paginated response.
 ///
-/// The handler delegates the search to the product service, converts domain models into
-/// `ProductResponseDto`, and wraps the results in a `PaginationResponseDto` containing the
-/// items, the total number of pages, and the page size from the request.
+/// Delegates the query to the product service, converts each domain model into a
+/// ProductResponseDto, and wraps the items with the total number of pages and the
+/// requested page size.
 ///
 /// # Examples
 ///
 /// ```ignore
-/// // In an async test or handler context:
+/// // In an async context:
 /// let state = /* AppState with product_service configured */;
 /// let query = SearchQueryDto { q: Some("laptop".into()) };
 /// let pagination = Pagination { page: 1, page_size: 20 };
 /// let result = search_products(State(state), Query(query), Query(pagination)).await;
 /// match result {
-///     Ok(Json(pagination_resp)) => {
-///         assert!(pagination_resp.items.len() <= 20);
-///     }
+///     Ok(Json(pagination_resp)) => assert!(pagination_resp.items.len() <= 20),
 ///     Err(e) => panic!("search failed: {:?}", e),
 /// }
 /// ```

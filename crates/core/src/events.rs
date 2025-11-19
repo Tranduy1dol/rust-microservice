@@ -14,19 +14,18 @@ pub enum AppEvent {
 }
 
 impl AppEvent {
-    /// Get the event variant name as a static string.
-    ///
-    /// # Returns
-    ///
-    /// The variant name as a `'static` string slice.
+    /// Provides the event variant name as a `'static` string slice.
     ///
     /// # Examples
     ///
     /// ```
     /// use crate::events::AppEvent;
+    /// use rust_decimal::Decimal;
+    ///
     /// let e = AppEvent::UserRegistered { user_id: 1, email: "a@b.com".into() };
     /// assert_eq!(e.name(), "UserRegistered");
-    /// let o = AppEvent::OrderPlaced { order_id: 2, user_id: 1, total: rust_decimal::Decimal::new(100, 2) };
+    ///
+    /// let o = AppEvent::OrderPlaced { order_id: 2, user_id: 1, total: Decimal::new(100, 2) };
     /// assert_eq!(o.name(), "OrderPlaced");
     /// ```
     pub fn name(&self) -> &'static str {

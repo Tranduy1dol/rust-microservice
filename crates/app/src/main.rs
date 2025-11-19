@@ -2,10 +2,15 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use app_core::events::AppEvent;
-use app_core::service::{product_service::ProductService, user_service::UserService};
+use app_core::service::{
+    cart_service::CartService, checkout_service::CheckoutService, product_service::ProductService,
+    user_service::UserService,
+};
 use app_core::tracing::init_standard_tracing;
+use infra::cache::RedisCartRepository;
 use infra::database::{
-    create_connection_pool, product_repo::SeaOrmProductRepo, user_repo::SeaOrmUserRepo,
+    checkout_repo::SeaOrmCheckoutRepo, create_connection_pool, product_repo::SeaOrmProductRepo,
+    user_repo::SeaOrmUserRepo,
 };
 use tokio::sync::mpsc;
 
@@ -17,20 +22,20 @@ mod router;
 mod state;
 mod worker;
 
-/// Application entry point that bootstraps configuration, database connections, services, routing, and starts the HTTP server.
+/// Bootstraps configuration, connections, services, and starts the HTTP server.
 ///
-/// This function loads the configuration, creates the database connection pool, initializes structured logging,
-/// constructs the repository and service layers, builds the application router with shared state, binds a TCP listener
-/// on 0.0.0.0 at the configured port, and runs the Axum server until shutdown.
+/// Initializes application configuration and observability, creates the database and Redis connection pools,
+/// constructs repository and service layers, assembles shared application state, builds the HTTP router,
+/// binds a TCP listener on 0.0.0.0 at the configured port, and runs the Axum server until shutdown.
 ///
 /// # Returns
 ///
-/// `Ok(())` on clean shutdown; an error is returned if configuration loading, database pool creation, binding, or serving fails.
+/// `Ok(())` on clean shutdown; an error if configuration loading, pool creation, binding, or serving fails.
 ///
 /// # Examples
 ///
 /// ```no_run
-/// // Start the server (run the compiled binary instead of executing in doc tests)
+/// // Run the server (execute the compiled binary)
 /// // $ cargo run --bin your_binary_name
 /// ```
 #[tokio::main]
@@ -46,6 +51,9 @@ async fn main() -> anyhow::Result<()> {
     let db_pool = create_connection_pool(&config.database.url).await?;
     tracing::info!("Database connected successfully");
 
+    let redis_pool = infra::cache::create_connection_pool(&config.redis.url).await?;
+    tracing::info!("Redis connected successfully");
+
     let (event_sender, event_receiver) = mpsc::channel::<AppEvent>(100);
     tokio::spawn(worker::event_worker(event_receiver));
 
@@ -59,9 +67,20 @@ async fn main() -> anyhow::Result<()> {
     let product_repo_adapter = Arc::new(SeaOrmProductRepo::new(db_pool.clone()));
     let product_service = Arc::new(ProductService::new(product_repo_adapter));
 
+    let cart_repo_adapter = Arc::new(RedisCartRepository::new(redis_pool));
+    let cart_service = Arc::new(CartService::new(cart_repo_adapter));
+
+    let checkout_repo_adapter = Arc::new(SeaOrmCheckoutRepo::new(db_pool.clone()));
+    let checkout_service = Arc::new(CheckoutService::new(
+        cart_service.clone(),
+        checkout_repo_adapter,
+    ));
+
     let app_state = state::AppState {
         user_service,
         product_service,
+        cart_service,
+        checkout_service,
     };
     let app = router::create_router(app_state);
     let addr = format!("0.0.0.0:{}", config.server.port);
