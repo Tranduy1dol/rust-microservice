@@ -18,9 +18,20 @@ pub fn create_router(state: AppState) -> Router {
     Router::new().nest("/api/v1", api_routes(state))
 }
 
-/// Constructs a Router with `/users` and `/products` sub-routers.
+/// Constructs a Router mounting API sub-routers for users, products, cart, and checkout.
 ///
-/// The returned Router mounts user-related routes at `/users` and product-related routes at `/products`.
+/// Mounts the following paths:
+/// - `/users`
+/// - `/products`
+/// - `/cart`
+/// - `/checkout`
+///
+/// The provided `AppState` is cloned for the `/users`, `/products`, and `/cart` sub-routers;
+/// ownership of `state` is moved into the `/checkout` sub-router.
+///
+/// # Returns
+///
+/// A `Router` with the above sub-routers nested at their respective paths.
 ///
 /// # Examples
 ///

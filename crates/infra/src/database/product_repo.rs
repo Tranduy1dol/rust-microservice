@@ -280,7 +280,7 @@ impl ProductRepository for SeaOrmProductRepo {
             .map_err(Error::from)
     }
 
-    /// Deletes the product with the given ID and returns the deleted record.
+    /// Delete a product by its ID and return the deleted model.
     ///
     /// If no product with the specified ID exists, returns an `Error::not_found`.
     ///

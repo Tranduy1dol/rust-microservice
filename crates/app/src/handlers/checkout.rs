@@ -4,10 +4,40 @@ use serde_json::json;
 use crate::state::AppState;
 use app_core::error::Error;
 
+/// Creates an Axum router that mounts the checkout handler at the POST "/" endpoint and attaches the provided application state.
+///
+/// # Examples
+///
+/// ```no_run
+/// use axum::Router;
+/// use crate::handlers::checkout::routes;
+/// use crate::state::AppState;
+///
+/// // Build your application state somehow (example uses a placeholder)
+/// let state: AppState = /* build AppState */ unimplemented!();
+/// let router: Router = routes(state);
+/// // `router` now has a POST "/" route wired to the checkout handler with `state` available via extractors.
+/// ```
 pub fn routes(state: AppState) -> Router {
     Router::new().route("/", post(checkout)).with_state(state)
 }
 
+/// Creates an order for the given user and returns an HTTP 201 response with the created `orderId`.
+///
+/// On success this handler returns `(StatusCode::CREATED, Json({ "orderId": <id> }))`.
+///
+/// # Examples
+///
+/// ```no_run
+/// use axum::http::StatusCode;
+/// use serde_json::json;
+/// use axum::Json;
+///
+/// // Example of expected response shape (handler invocation omitted)
+/// let resp: (StatusCode, Json<serde_json::Value>) = (StatusCode::CREATED, Json(json!({"orderId": 42})));
+/// assert_eq!(resp.0, StatusCode::CREATED);
+/// assert_eq!(resp.1.0["orderId"], json!(42));
+/// ```
 pub async fn checkout(
     State(state): State<AppState>,
     Extension(user_id): Extension<i64>,

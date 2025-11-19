@@ -39,10 +39,9 @@ pub struct UpdateProductDto {
     pub description: Option<String>,
 }
 
-/// Trims leading and trailing whitespace from a deserialized string.
+/// Trim leading and trailing whitespace from a deserialized string.
 ///
-/// This helper can be used with serde's `deserialize_with` to ensure string fields
-/// are trimmed during deserialization. Deserialization errors are forwarded unchanged.
+/// If deserialization fails, the deserialization error is returned unchanged.
 ///
 /// # Examples
 ///

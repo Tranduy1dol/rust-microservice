@@ -11,6 +11,16 @@ pub struct SeaOrmCheckoutRepo {
 }
 
 impl SeaOrmCheckoutRepo {
+    /// Creates a new SeaOrmCheckoutRepo that uses the provided database connection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use sea_orm::DatabaseConnection;
+    /// # use crates::infra::database::checkout_repo::SeaOrmCheckoutRepo;
+    /// let conn: DatabaseConnection = unimplemented!();
+    /// let repo = SeaOrmCheckoutRepo::new(conn);
+    /// ```
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
@@ -18,6 +28,31 @@ impl SeaOrmCheckoutRepo {
 
 #[async_trait]
 impl CheckoutRepository for SeaOrmCheckoutRepo {
+    /// Creates an order for the given user from the provided cart items inside a single database transaction.
+    ///
+    /// This method:
+    /// - inserts a new order with an initial total of zero,
+    /// - validates and reserves product stock for each cart item,
+    /// - creates corresponding order items,
+    /// - updates the order's total amount to the accumulated line totals,
+    /// - and commits the transaction atomically.
+    ///
+    /// On failure the transaction is rolled back and an `Error` is returned for database errors, missing products, or insufficient stock.
+    ///
+    /// # Returns
+    ///
+    /// `order::Model` representing the finalized order with its `total_amount` updated.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// // Assume `repo` implements `create_order` and `CartItemDto` is available.
+    /// // let repo = SeaOrmCheckoutRepo::new(db);
+    /// // let items = vec![CartItemDto { product_id: 1, quantity: 2 }];
+    /// // let result = tokio::runtime::Runtime::new().unwrap().block_on(async {
+    /// //     repo.create_order(42, items).await
+    /// // });
+    /// ```
     async fn create_order(
         &self,
         user_id: i64,
