@@ -1,5 +1,6 @@
 use sea_orm::{ConnectOptions, Database};
 
+pub mod checkout_repo;
 pub mod product_repo;
 pub mod user_repo;
 

@@ -31,5 +31,7 @@ pub fn create_router(state: AppState) -> Router {
 fn api_routes(state: AppState) -> Router {
     Router::new()
         .nest("/users", handlers::user::routes(state.clone()))
-        .nest("/products", handlers::product::routes(state))
+        .nest("/products", handlers::product::routes(state.clone()))
+        .nest("/cart", handlers::cart::routes(state.clone()))
+        .nest("/checkout", handlers::checkout::routes(state))
 }
