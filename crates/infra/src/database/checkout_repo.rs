@@ -4,7 +4,9 @@ use app_core::ports::checkout_repo::CheckoutRepository;
 use async_trait::async_trait;
 use entities::{order, order_item, product};
 use rust_decimal::Decimal;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set, TransactionTrait};
+use sea_orm::{
+    ActiveModelTrait, DatabaseConnection, EntityTrait, QuerySelect, Set, TransactionTrait,
+};
 
 pub struct SeaOrmCheckoutRepo {
     db: DatabaseConnection,
@@ -58,10 +60,17 @@ impl CheckoutRepository for SeaOrmCheckoutRepo {
         user_id: i64,
         items: Vec<CartItemDto>,
     ) -> Result<order::Model, Error> {
-        let txn = self.db.begin().await.map_err(|e| {
-            tracing::error!("Failed to begin transaction: {:?}", e);
-            Error::internal("Transaction error".to_string())
-        })?;
+        let txn = self
+            .db
+            .begin_with_config(
+                Some(sea_orm::IsolationLevel::RepeatableRead),
+                Some(sea_orm::AccessMode::ReadWrite),
+            )
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to begin transaction: {:?}", e);
+                Error::internal("Transaction error".to_string())
+            })?;
 
         // 1. Create Order with 0 total first (or calculate first)
         // To calculate first, we need to iterate items. But we also need to lock them.
@@ -88,7 +97,15 @@ impl CheckoutRepository for SeaOrmCheckoutRepo {
 
         // 2. Process Items
         for item in items {
+            if item.quantity <= 0 {
+                return Err(Error::bad_request(format!(
+                    "Invalid quantity {} for product {}",
+                    item.quantity, item.product_id
+                )));
+            }
+
             let product = product::Entity::find_by_id(item.product_id)
+                .lock_exclusive()
                 .one(&txn)
                 .await
                 .map_err(|e| {

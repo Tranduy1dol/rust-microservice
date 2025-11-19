@@ -50,8 +50,16 @@ impl CheckoutService {
 
         let order = self.checkout_repo.create_order(user_id, cart.items).await?;
 
-        // Clear cart after successful checkout
-        self.cart_service.clear_cart(user_id).await?;
+        // Clear cart after successful checkout (best-effort)
+        // Don't propagate errors to prevent duplicate orders on retry
+        if let Err(e) = self.cart_service.clear_cart(user_id).await {
+            tracing::warn!(
+                "Failed to clear cart for user {} after creating order {}: {:?}",
+                user_id,
+                order.id,
+                e
+            );
+        }
 
         Ok(order)
     }
