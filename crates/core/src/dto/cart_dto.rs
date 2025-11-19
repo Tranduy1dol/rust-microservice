@@ -14,6 +14,15 @@ pub struct CartDto {
 }
 
 impl CartDto {
+    /// Creates a new `CartDto` for the specified user with an empty item list.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let cart = CartDto::new(42);
+    /// assert_eq!(cart.user_id, 42);
+    /// assert!(cart.items.is_empty());
+    /// ```
     pub fn new(user_id: i64) -> Self {
         Self {
             user_id,

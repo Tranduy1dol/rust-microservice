@@ -22,20 +22,20 @@ mod router;
 mod state;
 mod worker;
 
-/// Application entry point that bootstraps configuration, database connections, services, routing, and starts the HTTP server.
+/// Bootstraps configuration, connections, services, and starts the HTTP server.
 ///
-/// This function loads the configuration, creates the database connection pool, initializes structured logging,
-/// constructs the repository and service layers, builds the application router with shared state, binds a TCP listener
-/// on 0.0.0.0 at the configured port, and runs the Axum server until shutdown.
+/// Initializes application configuration and observability, creates the database and Redis connection pools,
+/// constructs repository and service layers, assembles shared application state, builds the HTTP router,
+/// binds a TCP listener on 0.0.0.0 at the configured port, and runs the Axum server until shutdown.
 ///
 /// # Returns
 ///
-/// `Ok(())` on clean shutdown; an error is returned if configuration loading, database pool creation, binding, or serving fails.
+/// `Ok(())` on clean shutdown; an error if configuration loading, pool creation, binding, or serving fails.
 ///
 /// # Examples
 ///
 /// ```no_run
-/// // Start the server (run the compiled binary instead of executing in doc tests)
+/// // Run the server (execute the compiled binary)
 /// // $ cargo run --bin your_binary_name
 /// ```
 #[tokio::main]
