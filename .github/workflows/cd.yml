@@ -1,9 +1,14 @@
 name: CD
 
 on:
+  pull_request:
+    branches:
+      - develop
+      - main
   push:
-    branches: [ "develop" ]
-    tags: [ 'v*.*.*' ]
+    branches:
+      - develop
+      - main
 
 env:
   REGISTRY: ghcr.io
