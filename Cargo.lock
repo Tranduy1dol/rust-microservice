@@ -113,6 +113,7 @@ dependencies = [
  "infra",
  "migration",
  "reqwest",
+ "rust_decimal",
  "rust_decimal_macros",
  "sea-orm",
  "serde",
