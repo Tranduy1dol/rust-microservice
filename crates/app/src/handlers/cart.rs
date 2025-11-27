@@ -27,7 +27,7 @@ pub fn routes(state: AppState) -> Router {
     Router::new()
         .route("/", get(get_cart))
         .route("/items", post(add_item))
-        .route("/items/:product_id", delete(remove_item))
+        .route("/items/{product_id}", delete(remove_item))
         .with_state(state)
 }
 

@@ -31,7 +31,7 @@ impl CartDto {
     }
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct AddCartItemDto {
     #[validate(range(min = 1))]
     pub product_id: i64,

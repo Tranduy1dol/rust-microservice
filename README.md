@@ -1,102 +1,115 @@
 # Shopping Cart Microservice
+
+[![CI](https://github.com/Tranduy1dol/shopping-cart/actions/workflows/ci.yml/badge.svg)](https://github.com/Tranduy1dol/shopping-cart/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Tranduy1dol/shopping-cart/branch/develop/graph/badge.svg?token=QLN1P3LEH2)](https://codecov.io/gh/Tranduy1dol/shopping-cart)
 
+A robust, high-performance shopping cart microservice built with Rust, following Clean Architecture principles.
 
-## Description
+## 🚀 Tech Stack
 
----
+- **Language:** Rust 2024
+- **Web Framework:** Axum
+- **Database:** PostgreSQL (Persistence), Redis (Caching/Cart)
+- **ORM:** SeaORM
+- **Architecture:** Clean Architecture (Hexagonal)
+- **Containerization:** Docker & Docker Compose
+- **Testing:** Testcontainers, Mockall
 
-## Structure
+## ✨ Features
 
----
+- **User Management**: Registration, Login (JWT), Profile.
+- **Product Catalog**: Browse products, manage inventory (Admin).
+- **Shopping Cart**: High-performance Redis-backed cart with persistence.
+- **Checkout**: Transactional order creation with stock validation.
+- **Reviews**: Product reviews and ratings.
 
+## 📂 Project Structure
+
+The project is organized as a Cargo Workspace with multiple crates to enforce separation of concerns:
+
+- `crates/app`: Application entry point, HTTP handlers, dependency injection (wiring).
+- `crates/core`: Domain logic, service interfaces (ports), DTOs. Pure Rust, no external infrastructure dependencies.
+- `crates/infra`: Infrastructure implementation (Database adapters, Redis cache, external APIs).
+- `crates/entities`: SeaORM entity definitions (Database schema).
+- `crates/migration`: Database migrations.
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- [Rust](https://www.rust-lang.org/tools/install) (Latest Stable)
+- [Docker](https://www.docker.com/) & Docker Compose
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Tranduy1dol/shopping-cart.git
+   cd shopping-cart
+   ```
+
+2. **Start Infrastructure**
+   Start PostgreSQL and Redis containers:
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **Run Migrations**
+   ```bash
+   cargo run -p migration -- up
+   ```
+
+4. **Run the Application**
+   ```bash
+   cargo run -p app
+   ```
+   The server will start at `http://127.0.0.1:3000`.
+
+## ⚙️ Configuration
+
+Configuration is managed via `config/default.toml` and environment variables.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `APP_SERVER__PORT` | HTTP Server Port | `3000` |
+| `APP_DATABASE__URL` | PostgreSQL Connection String | `postgres://postgres:postgres@localhost:5432/shopping_cart` |
+| `APP_REDIS__URL` | Redis Connection String | `redis://localhost:6379` |
+
+## 🧪 Testing
+
+Run unit and integration tests:
+
+```bash
+# Run all tests
+cargo test --workspace
+
+# Run integration tests (requires Docker)
+cargo test --test integration_test
+
+# Run race condition tests
+cargo test --test race_condition_test
 ```
-shopping_cart/
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-│
-├── config/
-│   ├── default.toml
-│   └── production.toml
-│
-├── crates/
-│   │
-│   ├── app/
-│   │   ├── src/
-│   │   │   ├── main.rs
-│   │   │   ├── state.rs
-│   │   │   ├── router.rs
-│   │   │   ├── handlers/
-│   │   │   ├── worker.rs
-│   │   │   ├── config.rs
-│   │   │   ├── error.rs
-│   │   │   └── middleware/
-│   │   └── Cargo.toml
-│   │
-│   ├── core/
-│   │   ├── src/
-│   │   │   ├── lib.rs
-│   │   │   ├── events.rs
-│   │   │   ├── ports/
-│   │   │   └── services/
-│   │   └── Cargo.toml
-│   │
-│   ├── infrastructure/
-│   │   ├── src/
-│   │   │   ├── lib.rs
-│   │   │   ├── database/
-│   │   │   └── cache/
-│   │   └── Cargo.toml
-│   │
-│   ├── entities/
-│   └── migration/
-│
-├── tests/
-│   ├── common.rs
-│   ├── user_api.rs
-│   ├── cart_api.rs
-│   └── order_api.rs
-│
-├── .gitignore
-├── Cargo.toml
-├── docker-compose.yml
-└── Dockerfile
-```
 
-# Feature List
+## 📚 API Documentation
 
----
-This list is structured around the capabilities your backend service would need to provide via APIs.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/users/register` | Register a new user |
+| `POST` | `/api/v1/users/login` | Login and get JWT |
+| `GET` | `/api/v1/products` | List all products |
+| `GET` | `/api/v1/cart` | Get current user's cart |
+| `POST` | `/api/v1/cart/items` | Add item to cart |
+| `DELETE` | `/api/v1/cart/items/{id}` | Remove item from cart |
+| `POST` | `/api/v1/checkout` | Checkout and create order |
 
-## 👤 User & Auth Service
+## 🤝 Contributing
 
----
-- [ ] Core: User registration, login (e.g., with JWT tokens), password reset, and profile management.
-- [ ] Data: Manages user data, addresses, and authentication.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📦 Product Catalog Service
+## 📄 License
 
----
-- [ ] Product Management (Admin): Full CRUD (Create, Read, Update, Delete) for products.
-- [ ] Category Management (Admin): Organize products into categories and subcategories.
-- [ ] Image Management (Admin): Ability to add multiple images per product.
-- [ ] Public Access: Endpoints for clients to fetch products by category, search by name, and retrieve detailed product information (including images and average rating).
-
-## 🛒 Persistent Shopping Cart Service
-
----
-- [ ] Functionality: Add items, update quantities, and remove items from a cart. The cart's state is saved in the database, allowing it to persist between user sessions or devices.
-
-## 📝 Order & Checkout Service
-
----
-- [ ] Order Creation: Convert a user's shopping cart into a formal order.
-- [ ] Order History: Allows users to retrieve a list of their past and current orders.
-- [ ] Order Management (Admin): View all orders and update their status (e.g., processing, shipped, canceled).
-
-## ⭐ Reviews & Wishlist Service
-
----
-- [ ] Reviews: Allow authenticated users to submit reviews (rating and text) for products they've purchased. Fetch all reviews for a given product.
-- [ ] Wishlist: Enable users to add or remove products from a personal wishlist.
+Distributed under the MIT License. See `LICENSE` for more information.
