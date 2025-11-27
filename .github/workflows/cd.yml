@@ -1,10 +1,6 @@
-name: CD
+name: Continuous Deployment
 
 on:
-  pull_request:
-    branches:
-      - develop
-      - main
   push:
     branches:
       - develop
