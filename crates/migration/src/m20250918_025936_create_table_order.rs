@@ -36,14 +36,14 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Order::UserId).big_integer().not_null())
                     .col(
-                        ColumnDef::new(Order::CreatedAt)
+                        ColumnDef::new(Order::OrderDate)
                             .big_integer()
                             .not_null()
                             .default(Expr::cust(
                                 "CAST(EXTRACT(EPOCH FROM NOW()) * 1000 AS BIGINT)",
                             )),
                     )
-                    .col(ColumnDef::new(Order::Status).enumeration(
+                    .col(ColumnDef::new(Order::OrderStatus).enumeration(
                         OrderStatusEnum::OrderStatus,
                         [
                             OrderStatusEnum::Placed,
@@ -89,8 +89,8 @@ enum Order {
     Table,
     Id,
     UserId,
-    CreatedAt,
-    Status,
+    OrderDate,
+    OrderStatus,
     TotalAmount,
 }
 
