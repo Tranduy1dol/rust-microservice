@@ -9,60 +9,58 @@ pub struct CartService {
 }
 
 impl CartService {
-    /// Creates a CartService that uses the given cart repository.
+    /// Constructs a CartService that uses the provided cart repository.
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// use std::sync::Arc;
     /// // `repo` must implement `CartRepository`.
     /// let repo = Arc::new(/* your CartRepository implementation */);
     /// let svc = CartService::new(repo);
-    /// ```ignore
+    /// ```
     pub fn new(cart_repo: Arc<dyn CartRepository>) -> Self {
         Self { cart_repo }
     }
 
-    /// Fetches the cart for the specified user, returning an empty cart if none exists.
+    /// Return the cart for a user, or an empty cart if none exists.
     ///
     /// # Returns
     ///
-    /// `CartDto` containing the user's cart, or a new empty `CartDto` for the user if no cart was found.
+    /// `CartDto` containing the user's cart; if no cart exists, a new empty `CartDto` for the given `user_id`.
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```rust
     /// // async context required
-    /// let service: CartService = /* obtain CartService instance */;
-    /// let cart = service.get_cart(42).await.unwrap();
-    /// assert_eq!(cart.user_id, 42);
-    /// ```ignore
+    /// // let service: CartService = /* obtain CartService instance */;
+    /// // let cart = tokio::runtime::Runtime::new().unwrap().block_on(service.get_cart(42)).unwrap();
+    /// // assert_eq!(cart.user_id, 42);
+    /// ```
     pub async fn get_cart(&self, user_id: i64) -> Result<CartDto, Error> {
         let cart = self.cart_repo.get_by_user_id(user_id).await?;
         Ok(cart.unwrap_or_else(|| CartDto::new(user_id)))
     }
 
-    /// Adds the specified quantity of a product to the user's cart, creating the cart or item if necessary and persisting the change.
+    /// Adds the given quantity of a product to the user's cart, creating the cart or item if necessary and persisting the change.
     ///
-    /// The provided `quantity` must be greater than zero. If the cart already contains an item with `product_id`, that item's quantity is increased by `quantity`; otherwise a new item is appended. The updated cart is saved in the repository before being returned.
+    /// The `quantity` must be greater than zero. If an item with `product_id` already exists in the cart its quantity is increased by `quantity`; otherwise a new item is appended. The updated cart is saved in the repository and returned.
     ///
-    /// # Parameters
-    ///
-    /// - `quantity`: The number of units to add; must be greater than zero.
+    /// # Errors
+    /// Returns an `Error` when `quantity` is not greater than zero or when repository operations fail.
     ///
     /// # Returns
-    ///
-    /// `CartDto` containing the saved cart with the updated items.
+    /// The saved `CartDto` containing the cart with updated items.
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// # use std::sync::Arc;
     /// # async fn example(cart_service: &crate::service::CartService) {
     /// let updated = cart_service.add_item(1, 42, 3).await.unwrap();
     /// assert!(updated.items.iter().any(|i| i.product_id == 42 && i.quantity >= 3));
     /// # }
-    /// ```ignore
+    /// ```
     pub async fn add_item(
         &self,
         user_id: i64,

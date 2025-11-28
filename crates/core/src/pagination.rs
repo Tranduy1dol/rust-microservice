@@ -12,7 +12,7 @@ pub struct Pagination {
     pub page_size: u64,
 }
 
-/// Default page number used for pagination.
+/// Default page number for pagination.
 ///
 /// # Returns
 ///
@@ -23,11 +23,11 @@ pub struct Pagination {
 /// ```ignore
 /// let p = default_page();
 /// assert_eq!(p, 1);
-/// ```ignore
+/// ```
 fn default_page() -> u64 {
     1
 }
-/// Returns the default page size used for pagination.
+/// Provides the default page size for pagination.
 ///
 /// # Returns
 ///
@@ -37,7 +37,7 @@ fn default_page() -> u64 {
 ///
 /// ```ignore
 /// assert_eq!(default_page_size(), 10);
-/// ```ignore
+/// ```
 fn default_page_size() -> u64 {
     10
 }
@@ -51,7 +51,7 @@ pub struct PaginationResponseDto<T> {
 }
 
 impl<T> PaginationResponseDto<T> {
-    /// Creates a paginated response wrapping the given items and pagination metadata.
+    /// Creates a paginated response containing the provided items and pagination metadata.
     ///
     /// # Examples
     ///
@@ -60,7 +60,7 @@ impl<T> PaginationResponseDto<T> {
     /// assert_eq!(dto.data, vec![1, 2, 3]);
     /// assert_eq!(dto.page, 1);
     /// assert_eq!(dto.page_size, 10);
-    /// ```ignore
+    /// ```
     pub fn new(data: Vec<T>, page: u64, page_size: u64) -> Self {
         Self {
             data,

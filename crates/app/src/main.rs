@@ -20,11 +20,11 @@ use tokio::sync::mpsc;
 
 use app_lib::{config::Config, router, state, worker};
 
-/// Bootstraps configuration, connections, services, and starts the HTTP server.
+/// Bootstraps the application and runs the HTTP server.
 ///
-/// Initializes application configuration and observability, creates the database and Redis connection pools,
-/// constructs repository and service layers, assembles shared application state, builds the HTTP router,
-/// binds a TCP listener on 0.0.0.0 at the configured port, and runs the Axum server until shutdown.
+/// Loads configuration, initializes observability, creates database and Redis pools,
+/// constructs repositories and services, assembles shared application state, builds the HTTP router,
+/// binds a TCP listener on `0.0.0.0:<port>` from the configuration, and runs the Axum server until shutdown.
 ///
 /// # Returns
 ///
@@ -33,7 +33,7 @@ use app_lib::{config::Config, router, state, worker};
 /// # Examples
 ///
 /// ```no_run
-/// // Run the server (execute the compiled binary)
+/// // Run the compiled binary to start the server:
 /// // $ cargo run --bin your_binary_name
 /// ```
 #[tokio::main]

@@ -12,7 +12,7 @@ pub struct CheckoutService {
 }
 
 impl CheckoutService {
-    /// Constructs a CheckoutService using the provided shared CartService and CheckoutRepository.
+    /// Create a CheckoutService that uses the provided shared CartService and CheckoutRepository.
     ///
     /// # Examples
     ///
@@ -30,9 +30,13 @@ impl CheckoutService {
         }
     }
 
-    /// Performs checkout for the specified user: creates an order from the user's cart and clears the cart.
+    /// Creates an order from the specified user's cart and attempts to clear the cart.
     ///
-    /// Attempts to retrieve the user's cart, returns an error with message `"Cart is empty"` if the cart contains no items, creates an order from the cart items on success, clears the cart, and returns the created order.
+    /// Retrieves the user's cart, returns an error with message `"Cart is empty"` if the cart has no items, creates an order from the cart items, and then best-effort clears the cart. Errors from fetching the cart or creating the order are propagated; failures to clear the cart are logged and do not change the returned result.
+    ///
+    /// # Returns
+    ///
+    /// The created `order::Model` on success.
     ///
     /// # Examples
     ///
@@ -40,7 +44,7 @@ impl CheckoutService {
     /// // assuming `svc` is a configured `CheckoutService`
     /// let result = futures::executor::block_on(async { svc.checkout(1).await });
     /// assert!(result.is_ok());
-    /// ```ignore
+    /// ```
     pub async fn checkout(&self, user_id: i64) -> Result<order::Model, Error> {
         let cart = self.cart_service.get_cart(user_id).await?;
 

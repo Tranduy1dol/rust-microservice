@@ -22,9 +22,10 @@ pub fn routes(state: AppState) -> Router {
     Router::new().route("/", post(checkout)).with_state(state)
 }
 
-/// Creates an order for the given user and returns an HTTP 201 response with the created `orderId`.
+/// Create an order for the authenticated user and respond with the created order ID.
 ///
-/// On success this handler returns `(StatusCode::CREATED, Json({ "orderId": <id> }))`.
+/// On success returns an HTTP 201 Created status and a JSON body containing the created
+/// `orderId`.
 ///
 /// # Examples
 ///

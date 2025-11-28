@@ -13,7 +13,7 @@ pub struct ProductService {
 }
 
 impl ProductService {
-    /// Creates a new ProductService that uses the provided product repository.
+    /// Constructs a new ProductService that wraps the given product repository.
     ///
     /// # Examples
     ///
@@ -21,18 +21,18 @@ impl ProductService {
     /// use std::sync::Arc;
     /// let repo: Arc<dyn ProductRepository> = Arc::new(MyRepo::new());
     /// let service = ProductService::new(repo);
-    /// ```ignore
+    /// ```
     pub fn new(product_repo: Arc<dyn ProductRepository>) -> Self {
         Self { product_repo }
     }
 
     /// Create a new product from the provided DTO.
     ///
-    /// Attempts to validate the DTO and persist a new product record through the repository.
+    /// Validates the DTO and persists a new product through the configured repository.
     ///
     /// # Returns
     ///
-    /// `Ok(product::Model)` containing the created product on success, `Err(Error)` on failure.
+    /// `Ok(product::Model)` containing the created product, `Err(Error)` on failure.
     ///
     /// # Examples
     ///
@@ -50,7 +50,7 @@ impl ProductService {
     /// let created = svc.create_new(dto).await.unwrap();
     /// assert_eq!(created.name, "Widget");
     /// # }
-    /// ```ignore
+    /// ```
     pub async fn create_new(&self, dto: CreateProductDto) -> Result<product::Model, Error> {
         dto.validate()?;
         let CreateProductDto {
@@ -66,11 +66,11 @@ impl ProductService {
             .await
     }
 
-    /// Fetches a product by its identifier.
+    /// Fetches the product with the specified identifier.
     ///
     /// # Returns
     ///
-    /// `Ok(product::Model)` containing the product when found, `Err(Error)` on failure.
+    /// `product::Model` when a product with the given `id` exists, `Error` otherwise.
     ///
     /// # Examples
     ///
@@ -79,15 +79,14 @@ impl ProductService {
     /// let product = service.get_by_id(1).await.unwrap();
     /// assert_eq!(product.id, 1);
     /// # }
-    /// ```ignore
+    /// ```
     pub async fn get_by_id(&self, id: i64) -> Result<product::Model, Error> {
         self.product_repo.get_by_id(id).await
     }
 
-    /// Fetches products belonging to a specific category using pagination.
+    /// Fetches products for a specific category with pagination.
     ///
-    /// Validates the provided `Pagination` (returns an error if invalid) and returns the products for
-    /// the requested page together with the total number of matching products.
+    /// Validates the provided `Pagination` and returns the products for the requested page together with the total number of matching products.
     ///
     /// # Examples
     ///
@@ -99,7 +98,7 @@ impl ProductService {
     /// let (products, total) = svc.get_by_category_id(42, Pagination { page: 1, page_size: 10 }).await?;
     /// assert!(total >= products.len() as u64);
     /// # Ok(()) }
-    /// ```ignore
+    /// ```
     pub async fn get_by_category_id(
         &self,
         category_id: i64,
@@ -113,11 +112,13 @@ impl ProductService {
             .await
     }
 
-    /// Retrieves a paginated list of all products.
+    /// Fetches products for the given page and page size.
+    ///
+    /// Validates the provided `Pagination` and returns the products for that page along with the total number of products across all pages.
     ///
     /// # Returns
     ///
-    /// A tuple containing a vector of product models and the total number of products (`(Vec<product::Model>, u64)`).
+    /// A tuple `(Vec<product::Model>, u64)` where the first element is the list of products for the requested page and the second element is the total number of products.
     ///
     /// # Examples
     ///
@@ -129,7 +130,7 @@ impl ProductService {
     /// assert!(total >= products.len() as u64);
     /// #     });
     /// # }
-    /// ```ignore
+    /// ```
     pub async fn get_all(
         &self,
         pagination: Pagination,
@@ -140,10 +141,10 @@ impl ProductService {
         self.product_repo.get_all(page, page_size).await
     }
 
-    /// Searches products matching a free-text query and returns the paginated results.
+    /// Searches products by a free-text query and returns paginated matches.
     ///
-    /// Validates the search query and pagination parameters, then returns the matching products
-    /// for the requested page.
+    /// Validates the search query and pagination parameters, then returns the products
+    /// matching the query for the requested page.
     ///
     /// # Returns
     ///
@@ -160,7 +161,7 @@ impl ProductService {
     /// let (products, total) = service.search(query, pagination).await.unwrap();
     /// assert!(total >= products.len() as u64);
     /// # }
-    /// ```ignore
+    /// ```
     pub async fn search(
         &self,
         query_string: SearchQueryDto,
@@ -175,10 +176,11 @@ impl ProductService {
             .await
     }
 
-    /// Updates the stock quantity for the product with the given `id`.
+    /// Update the stock quantity for a product by its id.
     ///
-    /// Returns the updated `product::Model` on success. If `new_quantity` is less than zero,
-    /// returns a `bad_request` `Error`. Other failures from the repository are returned as `Error`.
+    /// If `new_quantity` is less than zero, returns a `bad_request` `Error` with the message
+    /// "Stock quantity cannot be negative". On success, returns the updated `product::Model`.
+    /// Repository errors are propagated.
     ///
     /// # Examples
     ///
@@ -190,13 +192,12 @@ impl ProductService {
     /// # let service = /* ProductService::new(repo) */ unimplemented!();
     /// # let id = 1i64;
     /// # let new_qty = 10i32;
-    /// // call (in async context)
     /// let res = block_on(service.update_stock(id, new_qty));
     /// match res {
     ///     Ok(updated) => assert_eq!(updated.stock_quantity, new_qty),
     ///     Err(e) => panic!("update failed: {:?}", e),
     /// }
-    /// ```ignore
+    /// ```
     pub async fn update_stock(&self, id: i64, new_quantity: i32) -> Result<product::Model, Error> {
         if new_quantity < 0 {
             return Err(Error::bad_request(
@@ -207,9 +208,10 @@ impl ProductService {
         self.product_repo.update_stock(id, new_quantity).await
     }
 
-    /// Updates a product's name, description, price, and category using values from the provided DTO.
+    /// Validate and apply updated product fields from `UpdateProductDto`.
     ///
-    /// The DTO is validated before the repository update is performed.
+    /// The DTO is validated; on success the repository is asked to update the product's
+    /// name, description, price, and category and the updated model is returned.
     ///
     /// # Returns
     ///
@@ -231,7 +233,7 @@ impl ProductService {
     ///     let updated = service.update_detail_by_id(dto).await.unwrap();
     ///     assert_eq!(updated.id, 1);
     /// }
-    /// ```ignore
+    /// ```
     pub async fn update_detail_by_id(
         &self,
         dto: UpdateProductDto,
@@ -253,7 +255,7 @@ impl ProductService {
 
     /// Deletes a product by its ID.
     ///
-    /// Returns the deleted product model on success.
+    /// Returns the deleted `product::Model`.
     ///
     /// # Examples
     ///
@@ -266,7 +268,7 @@ impl ProductService {
     /// let deleted = svc.delete_by_id(42).await?;
     /// // `deleted` is the removed `product::Model`
     /// # Ok(()) }
-    /// ```ignore
+    /// ```
     pub async fn delete_by_id(&self, id: i64) -> Result<product::Model, Error> {
         self.product_repo.delete_by_id(id).await
     }

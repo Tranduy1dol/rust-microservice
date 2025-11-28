@@ -7,10 +7,31 @@ pub struct AuthService {
 }
 
 impl AuthService {
+    /// Creates a new AuthService configured with the provided JWT secret.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let svc = AuthService::new("my_jwt_secret".to_string());
+    /// // use `svc` to verify tokens: `svc.verify_token(token_str)`
+    /// ```
     pub fn new(jwt_secret: String) -> Self {
         Self { jwt_secret }
     }
 
+    /// Verify a JWT and return its decoded claims if the token is valid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let svc = AuthService::new("my-secret".to_string());
+    /// // An invalid or malformed token will yield an error.
+    /// assert!(svc.verify_token("invalid.token").is_err());
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// `TokenClaims` parsed from the provided token on success; `Error::unauthorized` if the token is invalid or fails validation.
     pub fn verify_token(&self, token: &str) -> Result<TokenClaims, Error> {
         let validation = Validation::default();
         let token_data = decode::<TokenClaims>(
@@ -30,6 +51,19 @@ mod tests {
     use chrono::{Duration, Utc};
     use jsonwebtoken::{encode, EncodingKey, Header};
 
+    /// Generates a JWT containing the given subject (`sub`) with issued-at and expiration claims.
+    ///
+    /// The token's `iat` is set to the current time and `exp` is set to the current time plus
+    /// `exp_in_hours` hours. The token is encoded using `secret` and returned as a compact JWT string.
+    ///
+    /// Panics if encoding the token fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let token = generate_token("my-secret", 123, 1);
+    /// assert!(!token.is_empty());
+    /// ```
     fn generate_token(secret: &str, sub: i64, exp_in_hours: i64) -> String {
         let now = Utc::now();
         let iat = now.timestamp() as usize;

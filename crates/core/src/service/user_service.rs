@@ -23,14 +23,13 @@ pub struct UserService {
 }
 
 impl UserService {
-    /// Constructs a new UserService with the given repository, JWT signing secret, and event sender.
+    /// Create a UserService backed by the provided repository, JWT signing secret, and event sender.
     ///
-    /// The service will persist and retrieve users via the repository, sign JWTs using the provided secret,
-    /// and publish application events through the supplied sender.
+    /// The returned service will use `user_repo` for persistence, `jwt_secret` to sign tokens, and `event_sender` to publish application events.
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```rust
     /// use std::sync::Arc;
     /// use tokio::sync::mpsc;
     /// # use crates_core::service::UserService;
@@ -41,7 +40,7 @@ impl UserService {
     /// let jwt_secret = "your-jwt-secret".to_string();
     /// let (tx, _rx) = mpsc::channel::<AppEvent>(8);
     /// let svc = UserService::new(repo, jwt_secret, tx);
-    /// ```ignore
+    /// ```
     pub fn new(
         user_repo: Arc<dyn UserRepository>,
         jwt_secret: String,
@@ -54,10 +53,10 @@ impl UserService {
         }
     }
 
-    /// Register a new user and emit a UserRegistered event.
+    /// Create a new user and publish a `AppEvent::UserRegistered` event.
     ///
-    /// Validates the provided `RegisterUserDto`, hashes the password, persists the new user,
-    /// and attempts to publish a `AppEvent::UserRegistered` via the service's event sender.
+    /// Validates the provided `RegisterUserDto`, persists a new user in the repository,
+    /// and attempts to publish a `AppEvent::UserRegistered` using the service's event sender.
     ///
     /// # Returns
     ///
@@ -72,10 +71,8 @@ impl UserService {
     /// use crates_core::dto::RegisterUserDto;
     /// use crates_core::repository::InMemoryUserRepo;
     ///
-    /// // create repository and event channel
     /// let repo = Arc::new(InMemoryUserRepo::default());
     /// let (tx, _rx) = mpsc::channel(16);
-    ///
     /// let svc = UserService::new(repo, "secret".to_string(), tx);
     ///
     /// let dto = RegisterUserDto {
@@ -92,7 +89,7 @@ impl UserService {
     /// });
     ///
     /// assert_eq!(created.user_name, "alice");
-    /// ```ignore
+    /// ```
     #[tracing::instrument(skip_all, fields(user_email = %dto.email))]
     pub async fn register(&self, dto: RegisterUserDto) -> Result<user::Model, Error> {
         dto.validate()?;
@@ -133,10 +130,9 @@ impl UserService {
         Ok(user)
     }
 
-    /// Attempts to authenticate a user with the provided credentials and returns an authentication token on success.
+    /// Authenticates a user and returns a signed JWT for the authenticated user.
     ///
-    /// Returns an unauthorized `Error` when the email exists but the password does not match. Other errors from the user
-    /// repository or password verification are propagated.
+    /// Returns the JWT token string on success. Returns an unauthorized `Error` when the email exists but the password does not match. Returns an internal `Error` if the JWT secret is not configured or if token creation fails. Other errors from the user repository or password verification are propagated.
     ///
     /// # Examples
     ///
@@ -146,7 +142,7 @@ impl UserService {
     /// // let dto = /* LoginDto with email and password */;
     /// // let token = block_on(service.login(dto)).unwrap();
     /// // assert!(!token.is_empty());
-    /// ```ignore
+    /// ```
     pub async fn login(&self, dto: LoginDto) -> Result<String, Error> {
         let user = self.user_repo.get_by_email(dto.email).await?;
 
