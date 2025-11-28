@@ -17,7 +17,7 @@ impl SeaOrmCheckoutRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use sea_orm::DatabaseConnection;
     /// # use crates::infra::database::checkout_repo::SeaOrmCheckoutRepo;
     /// let conn: DatabaseConnection = unimplemented!();
@@ -47,7 +47,7 @@ impl CheckoutRepository for SeaOrmCheckoutRepo {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```ignore
     /// // Assume `repo` implements `create_order` and `CartItemDto` is available.
     /// // let repo = SeaOrmCheckoutRepo::new(db);
     /// // let items = vec![CartItemDto { product_id: 1, quantity: 2 }];

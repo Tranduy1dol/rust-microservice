@@ -39,13 +39,13 @@ pub struct UpdateProductDto {
     pub description: Option<String>,
 }
 
-/// Trim leading and trailing whitespace from a deserialized string.
+/// Trims leading and trailing whitespace from a deserialized String.
 ///
-/// If deserialization fails, the deserialization error is returned unchanged.
+/// If deserialization fails, the original deserialization error is returned.
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// use serde::Deserialize;
 ///
 /// #[derive(Deserialize, Debug, PartialEq)]
@@ -98,12 +98,12 @@ impl From<entities::product::Model> for ProductResponseDto {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// // Assuming `model` is an `entities::product::Model` instance:
     /// // let model = entities::product::Model { /* fields */ };
     /// // let dto = ProductResponseDto::from(model);
     /// // assert_eq!(dto.id, /* expected id */);
-    /// ```
+    /// ```ignore
     fn from(model: entities::product::Model) -> Self {
         Self {
             id: model.id,

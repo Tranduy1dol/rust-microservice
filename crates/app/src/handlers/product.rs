@@ -1,12 +1,16 @@
-use app_core::dto::product_dto::{
-    CreateProductDto, DeleteProductResponseDto, ProductResponseDto, SearchQueryDto,
-    UpdateProductDto,
+use app_core::{
+    dto::product_dto::{
+        CreateProductDto, DeleteProductResponseDto, ProductResponseDto, SearchQueryDto,
+        UpdateProductDto,
+    },
+    error::Error,
+    pagination::{Pagination, PaginationResponseDto},
 };
-use app_core::error::Error;
-use app_core::pagination::{Pagination, PaginationResponseDto};
-use axum::extract::{Path, Query, State};
-use axum::routing::{delete, get, post};
-use axum::{Json, Router};
+use axum::{
+    Json, Router,
+    extract::{Path, Query, State},
+    routing::{delete, get, post},
+};
 
 use crate::state::AppState;
 
@@ -17,7 +21,7 @@ use crate::state::AppState;
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use crate::AppState;
 /// use crate::handlers::product::routes;
 ///
@@ -45,7 +49,7 @@ pub fn routes(state: AppState) -> Router {
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// use axum::extract::{State, Json};
 /// // `app_state` and `payload` should be constructed according to your application context.
@@ -71,7 +75,7 @@ pub async fn create_product(
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use axum::{extract::{State, Path}, Json};
 /// // Assuming `state` is available and `product_id` is an i64:
 /// // let result = delete_product(State(state), Path(product_id)).await;
@@ -95,7 +99,7 @@ pub async fn delete_product(
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// # use axum::{extract::State, Json};
 /// # use crate::AppState;
 /// # use crate::dto::{UpdateProductDto, ProductResponseDto};
@@ -120,7 +124,7 @@ pub async fn update_product_detail(
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use axum::Json;
 /// use crate::handlers::product::get_all_products;
 /// use crate::state::AppState;

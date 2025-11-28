@@ -1,25 +1,27 @@
 use std::sync::Arc;
 
-use app_core::dto::cart_dto::{AddCartItemDto, CartDto};
-use app_core::service::{
-    cart_service::CartService, checkout_service::CheckoutService, product_service::ProductService,
-    user_service::UserService,
-};
-use app_lib::state::AppState;
-use axum::Extension;
-use infra::cache::RedisCartRepository;
-use infra::database::{
-    checkout_repo::SeaOrmCheckoutRepo, product_repo::SeaOrmProductRepo, user_repo::SeaOrmUserRepo,
+use infra::{
+    cache::RedisCartRepository,
+    database::{
+        checkout_repo::SeaOrmCheckoutRepo, product_repo::SeaOrmProductRepo,
+        user_repo::SeaOrmUserRepo,
+    },
 };
 use migration::{Migrator, MigratorTrait};
 use reqwest::Client;
 use sea_orm::{Database, DatabaseConnection};
-use testcontainers::ContainerAsync;
-use testcontainers::runners::AsyncRunner;
-use testcontainers_modules::postgres::Postgres;
-use testcontainers_modules::redis::Redis;
-use tokio::net::TcpListener;
-use tokio::sync::mpsc;
+use testcontainers::{ContainerAsync, runners::AsyncRunner};
+use testcontainers_modules::{postgres::Postgres, redis::Redis};
+use tokio::{net::TcpListener, sync::mpsc};
+
+use app_core::{
+    dto::cart_dto::{AddCartItemDto, CartDto},
+    service::{
+        auth_service::AuthService, cart_service::CartService, checkout_service::CheckoutService,
+        product_service::ProductService, user_service::UserService,
+    },
+};
+use app_lib::state::AppState;
 
 struct TestApp {
     pub address: String,
@@ -27,6 +29,7 @@ struct TestApp {
     // Keep containers alive
     pub _postgres: ContainerAsync<Postgres>,
     pub _redis: ContainerAsync<Redis>,
+    pub jwt_secret: String,
 }
 
 async fn spawn_app() -> TestApp {
@@ -70,13 +73,16 @@ async fn spawn_app() -> TestApp {
         .expect("Failed to connect to Redis");
 
     let (event_sender, _) = mpsc::channel(100);
+    let jwt_secret = "test_secret".to_string();
 
     let user_repo = Arc::new(SeaOrmUserRepo::new(db_pool.clone()));
     let user_service = Arc::new(UserService::new(
         user_repo,
-        "test_secret".to_string(),
+        jwt_secret.clone(),
         event_sender,
     ));
+
+    let auth_service = Arc::new(AuthService::new(jwt_secret.clone()));
 
     let product_repo = Arc::new(SeaOrmProductRepo::new(db_pool.clone()));
     let product_service = Arc::new(ProductService::new(product_repo));
@@ -88,13 +94,14 @@ async fn spawn_app() -> TestApp {
     let checkout_service = Arc::new(CheckoutService::new(cart_service.clone(), checkout_repo));
 
     let state = AppState {
+        auth_service,
         user_service,
         product_service,
         cart_service,
         checkout_service,
     };
 
-    let app = app_lib::router::create_router(state).layer(Extension(1i64)); // Mock Auth: Inject user_id = 1
+    let app = app_lib::router::create_router(state);
 
     // 5. Bind to random port
     let listener = TcpListener::bind("127.0.0.1:0")
@@ -112,7 +119,31 @@ async fn spawn_app() -> TestApp {
         db_pool,
         _postgres: postgres_node,
         _redis: redis_node,
+        jwt_secret,
     }
+}
+
+fn generate_test_token(user_id: i64, secret: &str) -> String {
+    use app_core::dto::auth::TokenClaims;
+    use chrono::{Duration, Utc};
+    use jsonwebtoken::{EncodingKey, Header, encode};
+
+    let now = Utc::now();
+    let iat = now.timestamp() as usize;
+    let exp = (now + Duration::hours(1)).timestamp() as usize;
+
+    let claims = TokenClaims {
+        sub: user_id,
+        iat,
+        exp,
+    };
+
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_ref()),
+    )
+    .unwrap()
 }
 
 #[tokio::test]
@@ -143,6 +174,8 @@ async fn test_cart_and_checkout_flow() {
         .expect("Failed to seed user");
     assert_eq!(user.id, 1, "Expected user ID 1");
 
+    let token = generate_test_token(user.id, &app.jwt_secret);
+
     // 1. Seed Product
     let active_product = product::ActiveModel {
         name: Set("Test Product".to_string()),
@@ -163,6 +196,7 @@ async fn test_cart_and_checkout_flow() {
     // 2. Add Item to Cart
     let response = client
         .post(format!("{}/api/v1/cart/items", app.address))
+        .header("Authorization", format!("Bearer {}", token))
         .json(&AddCartItemDto {
             product_id,
             quantity: 2,
@@ -180,6 +214,7 @@ async fn test_cart_and_checkout_flow() {
     // 3. Checkout
     let response = client
         .post(format!("{}/api/v1/checkout", app.address))
+        .header("Authorization", format!("Bearer {}", token))
         .send()
         .await
         .expect("Failed to execute checkout");
@@ -217,6 +252,7 @@ async fn test_cart_and_checkout_flow() {
     // 6. Verify Cart Cleared
     let response = client
         .get(format!("{}/api/v1/cart", app.address))
+        .header("Authorization", format!("Bearer {}", token))
         .send()
         .await
         .expect("Failed to get cart");

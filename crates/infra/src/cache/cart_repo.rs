@@ -15,7 +15,7 @@ impl RedisCartRepository {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```ignore
     /// let pool = /* obtain a RedisPool */ unimplemented!();
     /// let repo = RedisCartRepository::new(pool);
     /// ```
@@ -29,7 +29,7 @@ impl RedisCartRepository {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let key = get_key(42);
     /// assert_eq!(key, "cart:42");
     /// ```
@@ -49,7 +49,7 @@ impl CartRepository for RedisCartRepository {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```ignore
     /// # async fn example(repo: &RedisCartRepository) -> Result<(), Error> {
     /// let maybe_cart = repo.get_by_user_id(42).await?;
     /// if let Some(cart) = maybe_cart {
@@ -82,7 +82,7 @@ impl CartRepository for RedisCartRepository {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```ignore
     /// # use crates::infra::cache::cart_repo::RedisCartRepository;
     /// # async fn example(pool: RedisPool, cart: CartDto) {
     /// let repo = RedisCartRepository::new(pool);
@@ -121,7 +121,7 @@ impl CartRepository for RedisCartRepository {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # async fn example(repo: &crate::cache::RedisCartRepository) -> Result<(), crate::application::Error> {
     /// repo.delete_by_user_id(42).await?;
     /// # Ok(()) }

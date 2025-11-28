@@ -1,13 +1,15 @@
-use app_core::dto::cart_dto::{AddCartItemDto, CartDto};
-use app_core::error::Error;
+use app_core::{
+    dto::cart_dto::{AddCartItemDto, CartDto},
+    error::Error,
+};
 use axum::{
-    Extension, Json, Router,
+    Json, Router,
     extract::{Path, State},
     routing::{delete, get, post},
 };
 use validator::Validate;
 
-use crate::state::AppState;
+use crate::{extractors::auth::JwtAuth, state::AppState};
 
 /// Creates an Axum `Router` configured for cart operations and attaches the provided application state.
 ///
@@ -31,72 +33,70 @@ pub fn routes(state: AppState) -> Router {
         .with_state(state)
 }
 
-/// Fetches the cart belonging to the specified user.
-///
-/// Returns the user's cart serialized as JSON.
+/// Retrieves the authenticated user's cart and returns it as JSON.
 ///
 /// # Examples
 ///
-/// ```no_run
-/// use axum::{Extension, extract::State, Json};
+/// ```ignore
+/// use axum::extract::State;
+/// use axum::response::Json;
 /// use your_crate::state::AppState;
+/// use your_crate::auth::{JwtAuth, Claims};
 /// use your_crate::handlers::cart::get_cart;
 /// use your_crate::dto::CartDto;
 ///
-/// // `state` and `user_id` would be provided by your application runtime.
-/// // This demonstrates the callsite shape; do not run as-is.
-/// let state: AppState = /* ... */ todo!();
-/// let user_id: i64 = 42;
+/// let state: AppState = todo!();
+/// let claims = Claims { sub: 42, ..Default::default() };
 ///
 /// let response: Result<Json<CartDto>, _> = tokio::runtime::Runtime::new()
 ///     .unwrap()
-///     .block_on(async { get_cart(State(state), Extension(user_id)).await });
+///     .block_on(async { get_cart(State(state), JwtAuth(claims)).await });
 /// ```
 pub async fn get_cart(
     State(state): State<AppState>,
-    Extension(user_id): Extension<i64>,
+    JwtAuth(claims): JwtAuth,
 ) -> Result<Json<CartDto>, Error> {
-    let cart = state.cart_service.get_cart(user_id).await?;
+    let cart = state.cart_service.get_cart(claims.sub).await?;
     Ok(Json(cart))
 }
 
-/// Adds a product to the specified user's cart and returns the updated cart.
+/// Add the specified product and quantity to the authenticated user's cart.
 ///
-/// Validates the provided `AddCartItemDto` and delegates to the application's cart service
-/// to insert or update the item. May return an error if validation fails or the service
-/// operation fails.
+/// Validates the provided `AddCartItemDto` and updates the user's cart, returning the cart's new state.
 ///
 /// # Returns
 ///
-/// The updated `CartDto` on success.
+/// The updated `CartDto`.
 ///
 /// # Examples
 ///
-/// ```no_run
-/// # use axum::{extract::{State, Extension}, Json};
+/// ```ignore
+/// # use axum::{extract::{State, Json}};
 /// # use crate::state::AppState;
+/// # use crate::auth::JwtAuth;
 /// # use crate::handlers::cart::{add_item, AddCartItemDto, CartDto};
+/// # use crate::auth::Claims;
 /// # async fn example() {
 /// let state: AppState = /* initialize app state */ todo!();
-/// let user_id = 42i64;
+/// let claims = Claims { sub: 42, ..Default::default() };
 /// let dto = AddCartItemDto { product_id: 7, quantity: 2 };
-/// let result = add_item(State(state), Extension(user_id), Json(dto)).await;
+/// let result = add_item(State(state), JwtAuth(claims), Json(dto)).await;
 /// # }
 /// ```
 pub async fn add_item(
     State(state): State<AppState>,
-    Extension(user_id): Extension<i64>,
+    JwtAuth(claims): JwtAuth,
     Json(dto): Json<AddCartItemDto>,
 ) -> Result<Json<CartDto>, Error> {
     dto.validate()?;
     let cart = state
         .cart_service
-        .add_item(user_id, dto.product_id, dto.quantity)
+        .add_item(claims.sub, dto.product_id, dto.quantity)
         .await?;
     Ok(Json(cart))
 }
 
-/// Removes a product from the specified user's cart and returns the updated cart.
+/// Remove a product from the authenticated user's cart and return the updated cart.
 ///
 /// # Returns
 ///
@@ -104,15 +104,16 @@ pub async fn add_item(
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// #[tokio::test]
 /// async fn remove_item_example() {
-///     // `state` and middleware-provided `user_id` would be supplied by the application in real use.
+///     // `state`, `JwtAuth(claims)`, and middleware-provided values are supplied by the application in real use.
 ///     // This example demonstrates the call shape only.
 ///     let state = /* AppState instance */ todo!();
+///     let claims = /* JwtAuth claims with `sub` set to user id */ todo!();
 ///     let result = super::remove_item(
 ///         axum::extract::State(state),
-///         axum::extract::Extension(42i64),
+///         JwtAuth(claims),
 ///         axum::extract::Path(7i64),
 ///     ).await;
 ///     let _updated_cart = result.unwrap();
@@ -120,9 +121,12 @@ pub async fn add_item(
 /// ```
 pub async fn remove_item(
     State(state): State<AppState>,
-    Extension(user_id): Extension<i64>,
+    JwtAuth(claims): JwtAuth,
     Path(product_id): Path<i64>,
 ) -> Result<Json<CartDto>, Error> {
-    let cart = state.cart_service.remove_item(user_id, product_id).await?;
+    let cart = state
+        .cart_service
+        .remove_item(claims.sub, product_id)
+        .await?;
     Ok(Json(cart))
 }

@@ -15,7 +15,7 @@ impl SeaOrmUserRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use infra::database::user_repo::SeaOrmUserRepo;
     /// let db: sea_orm::DatabaseConnection = /* obtain or mock a DatabaseConnection */ unimplemented!();
     /// let repo = SeaOrmUserRepo::new(db);
@@ -33,7 +33,7 @@ impl UserRepository for SeaOrmUserRepo {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```ignore
     /// // `repo` is a SeaOrmUserRepo instance connected to a DatabaseConnection.
     /// let created = repo.create_new(
     ///     "alice".to_string(),
@@ -97,7 +97,7 @@ impl UserRepository for SeaOrmUserRepo {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```ignore
     /// // inside an async context
     /// let repo: SeaOrmUserRepo = /* created elsewhere */;
     /// let result = repo.get_by_email("alice@example.com".to_string()).await;

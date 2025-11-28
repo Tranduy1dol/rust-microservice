@@ -1,3 +1,4 @@
+pub mod auth_service;
 pub mod cart_service;
 pub mod checkout_service;
 pub mod product_service;

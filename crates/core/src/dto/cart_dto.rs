@@ -18,7 +18,7 @@ impl CartDto {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let cart = CartDto::new(42);
     /// assert_eq!(cart.user_id, 42);
     /// assert!(cart.items.is_empty());

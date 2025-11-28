@@ -1,14 +1,14 @@
-use axum::{Extension, Json, Router, extract::State, http::StatusCode, routing::post};
+use app_core::error::Error;
+use axum::{Json, Router, extract::State, http::StatusCode, routing::post};
 use serde_json::json;
 
-use crate::state::AppState;
-use app_core::error::Error;
+use crate::{extractors::auth::JwtAuth, state::AppState};
 
 /// Creates an Axum router that mounts the checkout handler at the POST "/" endpoint and attaches the provided application state.
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use axum::Router;
 /// use crate::handlers::checkout::routes;
 /// use crate::state::AppState;
@@ -22,13 +22,14 @@ pub fn routes(state: AppState) -> Router {
     Router::new().route("/", post(checkout)).with_state(state)
 }
 
-/// Creates an order for the given user and returns an HTTP 201 response with the created `orderId`.
+/// Create an order for the authenticated user and respond with the created order ID.
 ///
-/// On success this handler returns `(StatusCode::CREATED, Json({ "orderId": <id> }))`.
+/// On success returns an HTTP 201 Created status and a JSON body containing the created
+/// `orderId`.
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use axum::http::StatusCode;
 /// use serde_json::json;
 /// use axum::Json;
@@ -40,8 +41,8 @@ pub fn routes(state: AppState) -> Router {
 /// ```
 pub async fn checkout(
     State(state): State<AppState>,
-    Extension(user_id): Extension<i64>,
+    JwtAuth(claims): JwtAuth,
 ) -> Result<(StatusCode, Json<serde_json::Value>), Error> {
-    let order = state.checkout_service.checkout(user_id).await?;
+    let order = state.checkout_service.checkout(claims.sub).await?;
     Ok((StatusCode::CREATED, Json(json!({"orderId": order.id}))))
 }

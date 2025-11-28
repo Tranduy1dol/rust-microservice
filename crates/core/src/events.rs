@@ -14,7 +14,7 @@ pub enum AppEvent {
 }
 
 impl AppEvent {
-    /// Provides the event variant name as a `'static` string slice.
+    /// Get the AppEvent variant name as a 'static string slice.
     ///
     /// # Examples
     ///

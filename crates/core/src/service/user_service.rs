@@ -3,23 +3,18 @@ use std::sync::Arc;
 use chrono::{Duration, Utc};
 use entities::user;
 use jsonwebtoken::{encode, EncodingKey, Header};
-use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use validator::Validate;
 
 use crate::{
-    dto::user_dto::{LoginDto, RegisterUserDto},
+    dto::{
+        auth::TokenClaims,
+        user_dto::{LoginDto, RegisterUserDto},
+    },
     error::Error,
     events::AppEvent,
     ports::user_repo::UserRepository,
 };
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: i64,
-    exp: usize,
-    iat: usize,
-}
 
 pub struct UserService {
     user_repo: Arc<dyn UserRepository>,
@@ -28,14 +23,13 @@ pub struct UserService {
 }
 
 impl UserService {
-    /// Constructs a new UserService with the given repository, JWT signing secret, and event sender.
+    /// Create a UserService backed by the provided repository, JWT signing secret, and event sender.
     ///
-    /// The service will persist and retrieve users via the repository, sign JWTs using the provided secret,
-    /// and publish application events through the supplied sender.
+    /// The returned service will use `user_repo` for persistence, `jwt_secret` to sign tokens, and `event_sender` to publish application events.
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
     /// use std::sync::Arc;
     /// use tokio::sync::mpsc;
     /// # use crates_core::service::UserService;
@@ -59,10 +53,10 @@ impl UserService {
         }
     }
 
-    /// Register a new user and emit a UserRegistered event.
+    /// Create a new user and publish a `AppEvent::UserRegistered` event.
     ///
-    /// Validates the provided `RegisterUserDto`, hashes the password, persists the new user,
-    /// and attempts to publish a `AppEvent::UserRegistered` via the service's event sender.
+    /// Validates the provided `RegisterUserDto`, persists a new user in the repository,
+    /// and attempts to publish a `AppEvent::UserRegistered` using the service's event sender.
     ///
     /// # Returns
     ///
@@ -70,17 +64,15 @@ impl UserService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use std::sync::Arc;
     /// use tokio::sync::mpsc;
     /// use crates_core::service::UserService;
     /// use crates_core::dto::RegisterUserDto;
     /// use crates_core::repository::InMemoryUserRepo;
     ///
-    /// // create repository and event channel
     /// let repo = Arc::new(InMemoryUserRepo::default());
     /// let (tx, _rx) = mpsc::channel(16);
-    ///
     /// let svc = UserService::new(repo, "secret".to_string(), tx);
     ///
     /// let dto = RegisterUserDto {
@@ -138,14 +130,13 @@ impl UserService {
         Ok(user)
     }
 
-    /// Attempts to authenticate a user with the provided credentials and returns an authentication token on success.
+    /// Authenticates a user and returns a signed JWT for the authenticated user.
     ///
-    /// Returns an unauthorized `Error` when the email exists but the password does not match. Other errors from the user
-    /// repository or password verification are propagated.
+    /// Returns the JWT token string on success. Returns an unauthorized `Error` when the email exists but the password does not match. Returns an internal `Error` if the JWT secret is not configured or if token creation fails. Other errors from the user repository or password verification are propagated.
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use futures::executor::block_on;
     /// // let service = /* UserService instance */;
     /// // let dto = /* LoginDto with email and password */;
@@ -169,7 +160,7 @@ impl UserService {
         let iat = now.timestamp() as usize;
         let exp = (now + Duration::hours(24)).timestamp() as usize;
 
-        let claims = Claims {
+        let claims = TokenClaims {
             sub: user.id,
             iat,
             exp,

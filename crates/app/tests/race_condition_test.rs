@@ -1,31 +1,35 @@
 use std::sync::Arc;
 
-use app_core::dto::cart_dto::AddCartItemDto;
-use app_core::service::{
-    cart_service::CartService, checkout_service::CheckoutService, product_service::ProductService,
-    user_service::UserService,
-};
-use app_lib::state::AppState;
 use futures::future::join_all;
-use infra::cache::RedisCartRepository;
-use infra::database::{
-    checkout_repo::SeaOrmCheckoutRepo, product_repo::SeaOrmProductRepo, user_repo::SeaOrmUserRepo,
+use infra::{
+    cache::RedisCartRepository,
+    database::{
+        checkout_repo::SeaOrmCheckoutRepo, product_repo::SeaOrmProductRepo,
+        user_repo::SeaOrmUserRepo,
+    },
 };
 use migration::{Migrator, MigratorTrait};
 use reqwest::Client;
 use sea_orm::{Database, DatabaseConnection};
-use testcontainers::ContainerAsync;
-use testcontainers::runners::AsyncRunner;
-use testcontainers_modules::postgres::Postgres;
-use testcontainers_modules::redis::Redis;
-use tokio::net::TcpListener;
-use tokio::sync::mpsc;
+use testcontainers::{ContainerAsync, runners::AsyncRunner};
+use testcontainers_modules::{postgres::Postgres, redis::Redis};
+use tokio::{net::TcpListener, sync::mpsc};
+
+use app_core::{
+    dto::cart_dto::AddCartItemDto,
+    service::{
+        auth_service::AuthService, cart_service::CartService, checkout_service::CheckoutService,
+        product_service::ProductService, user_service::UserService,
+    },
+};
+use app_lib::state::AppState;
 
 struct TestApp {
     pub address: String,
     pub db_pool: DatabaseConnection,
     pub _postgres: ContainerAsync<Postgres>,
     pub _redis: ContainerAsync<Redis>,
+    pub jwt_secret: String,
 }
 
 async fn spawn_app() -> TestApp {
@@ -65,13 +69,16 @@ async fn spawn_app() -> TestApp {
         .expect("Failed to connect to Redis");
 
     let (event_sender, _) = mpsc::channel(100);
+    let jwt_secret = "test_secret".to_string();
 
     let user_repo = Arc::new(SeaOrmUserRepo::new(db_pool.clone()));
     let user_service = Arc::new(UserService::new(
         user_repo,
-        "test_secret".to_string(),
+        jwt_secret.clone(),
         event_sender,
     ));
+
+    let auth_service = Arc::new(AuthService::new(jwt_secret.clone()));
 
     let product_repo = Arc::new(SeaOrmProductRepo::new(db_pool.clone()));
     let product_service = Arc::new(ProductService::new(product_repo));
@@ -83,22 +90,14 @@ async fn spawn_app() -> TestApp {
     let checkout_service = Arc::new(CheckoutService::new(cart_service.clone(), checkout_repo));
 
     let state = AppState {
+        auth_service,
         user_service,
         product_service,
         cart_service,
         checkout_service,
     };
 
-    // Note: We need dynamic user_id injection for concurrent users.
-    // But for race condition on the SAME product, we can use different users or the same user?
-    // The same user might be blocked by cart logic if we clear it.
-    // Different users are better.
-    // We can't easily inject different user_ids via global middleware if we use one app instance.
-    // Unless the middleware reads from a header!
-    // Let's use a custom middleware that reads `x-user-id` header.
-
-    let app = app_lib::router::create_router(state)
-        .layer(axum::middleware::from_fn(mock_auth_middleware));
+    let app = app_lib::router::create_router(state);
 
     let listener = TcpListener::bind("127.0.0.1:0")
         .await
@@ -115,25 +114,31 @@ async fn spawn_app() -> TestApp {
         db_pool,
         _postgres: postgres_node,
         _redis: redis_node,
+        jwt_secret,
     }
 }
 
-async fn mock_auth_middleware(
-    mut req: axum::extract::Request,
-    next: axum::middleware::Next,
-) -> Result<axum::response::Response, http::StatusCode> {
-    let user_id_header = req
-        .headers()
-        .get("x-user-id")
-        .and_then(|h| h.to_str().ok())
-        .and_then(|s| s.parse::<i64>().ok());
+fn generate_test_token(user_id: i64, secret: &str) -> String {
+    use app_core::dto::auth::TokenClaims;
+    use chrono::{Duration, Utc};
+    use jsonwebtoken::{EncodingKey, Header, encode};
 
-    if let Some(user_id) = user_id_header {
-        req.extensions_mut().insert(user_id);
-        Ok(next.run(req).await)
-    } else {
-        Err(http::StatusCode::UNAUTHORIZED)
-    }
+    let now = Utc::now();
+    let iat = now.timestamp() as usize;
+    let exp = (now + Duration::hours(1)).timestamp() as usize;
+
+    let claims = TokenClaims {
+        sub: user_id,
+        iat,
+        exp,
+    };
+
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_ref()),
+    )
+    .unwrap()
 }
 
 #[tokio::test]
@@ -164,7 +169,7 @@ async fn test_concurrent_checkout_race_condition() {
 
     // 2. Prepare Concurrent Users
     let num_users = 5;
-    let mut user_ids = Vec::new();
+    let mut user_tokens = Vec::new();
 
     for i in 1..=num_users {
         let user = user::ActiveModel {
@@ -183,12 +188,14 @@ async fn test_concurrent_checkout_race_condition() {
             .insert(&app.db_pool)
             .await
             .expect("Failed to seed user");
-        user_ids.push(user.id);
+
+        let token = generate_test_token(user.id, &app.jwt_secret);
+        user_tokens.push(token.clone());
 
         // Add item to cart for each user
         let response = client
             .post(format!("{}/api/v1/cart/items", app.address))
-            .header("x-user-id", user.id.to_string())
+            .header("Authorization", format!("Bearer {}", token))
             .json(&AddCartItemDto {
                 product_id,
                 quantity: 1,
@@ -201,13 +208,13 @@ async fn test_concurrent_checkout_race_condition() {
 
     // 3. Execute Concurrent Checkouts
     let mut handles = Vec::new();
-    for user_id in user_ids {
+    for token in user_tokens {
         let client = client.clone();
         let address = app.address.clone();
         handles.push(tokio::spawn(async move {
             client
                 .post(format!("{}/api/v1/checkout", address))
-                .header("x-user-id", user_id.to_string())
+                .header("Authorization", format!("Bearer {}", token))
                 .send()
                 .await
         }));

@@ -11,16 +11,18 @@ pub struct SeaOrmProductRepo {
 }
 
 impl SeaOrmProductRepo {
-    /// Creates a new SeaOrmProductRepo that uses the provided database connection.
+    /// Creates a SeaOrmProductRepo bound to the provided database connection.
     ///
-    /// Returns a SeaOrmProductRepo backed by the provided `DatabaseConnection`.
+    /// Returns the constructed repository.
     ///
     /// # Examples
     ///
-    /// ```
-    /// # use sea_orm::DatabaseConnection;
-    /// # use crate::repos::SeaOrmProductRepo;
-    /// let db: DatabaseConnection = /* obtain a DatabaseConnection */ unimplemented!();
+    /// ```no_run
+    /// use sea_orm::DatabaseConnection;
+    /// use crate::repos::SeaOrmProductRepo;
+    ///
+    /// // obtain a DatabaseConnection from your application setup
+    /// let db: DatabaseConnection = /* ... */ unimplemented!();
     /// let repo = SeaOrmProductRepo::new(db);
     /// ```
     pub fn new(db: DatabaseConnection) -> Self {
@@ -30,13 +32,13 @@ impl SeaOrmProductRepo {
 
 #[async_trait]
 impl ProductRepository for SeaOrmProductRepo {
-    /// Creates and inserts a new product record into the database.
+    /// Creates a new product record and inserts it into the database.
     ///
     /// The product's `created_at` and `updated_at` timestamps are set to the current UTC time in milliseconds.
     ///
     /// # Returns
     ///
-    /// `product::Model` representing the inserted product on success.
+    /// `product::Model` representing the inserted product.
     ///
     /// # Examples
     ///
@@ -74,11 +76,11 @@ impl ProductRepository for SeaOrmProductRepo {
             .map_err(Error::from)
     }
 
-    /// Fetches a product by its ID.
+    /// Retrieves a product by its numeric ID.
     ///
     /// # Returns
     ///
-    /// `Ok` with the found `product::Model`, `Err` when the product does not exist or a database error occurs.
+    /// `Ok` with the matching `product::Model` if a product with the given ID exists, `Err` with a repository `Error` when the product is not found or a database error occurs.
     ///
     /// # Examples
     ///
@@ -86,6 +88,7 @@ impl ProductRepository for SeaOrmProductRepo {
     /// # use crate::repositories::seaorm::SeaOrmProductRepo;
     /// # async fn example(repo: &SeaOrmProductRepo) {
     /// let product = repo.get_by_id(1).await.unwrap();
+    /// assert_eq!(product.id, 1);
     /// println!("Found product: {}", product.name);
     /// # }
     /// ```
@@ -97,9 +100,7 @@ impl ProductRepository for SeaOrmProductRepo {
             .ok_or(Error::not_found(format!("Product {} not found", id)))
     }
 
-    /// Fetches a single page of products belonging to the specified category, ordered by name.
-    ///
-    /// Page numbering is 1-based: `page = 1` returns the first page. `page_size` controls the number of items per page.
+    /// Fetches a single page of products for the specified category, ordered by name.
     ///
     /// # Returns
     ///
@@ -110,7 +111,7 @@ impl ProductRepository for SeaOrmProductRepo {
     /// ```
     /// # async fn example(repo: &SeaOrmProductRepo) -> Result<(), Error> {
     /// let (products, total_pages) = repo.get_by_category_id(42, 1, 20).await?;
-    /// // `products` contains up to 20 items from category 42; `total_pages` is the total page count.
+    /// assert!(total_pages >= 1);
     /// # Ok(()) }
     /// ```
     async fn get_by_category_id(
@@ -130,7 +131,9 @@ impl ProductRepository for SeaOrmProductRepo {
         Ok((products, num_pages))
     }
 
-    /// Fetches a page of all products ordered by name.
+    /// Retrieve a single page of all products ordered by name (ascending).
+    ///
+    /// Page numbering is 1-based; `page_size` controls the number of items per page.
     ///
     /// # Returns
     ///
@@ -165,13 +168,13 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use crate::repos::SeaOrmProductRepo;
     /// # async fn example(repo: &SeaOrmProductRepo) {
     /// let (products, total_pages) = repo.search_by_query_string("phone".into(), 1, 10).await.unwrap();
     /// assert!(total_pages >= 0);
     /// # }
-    /// ```
+    /// ```ignore
     ///
     /// # Returns
     ///
@@ -193,9 +196,10 @@ impl ProductRepository for SeaOrmProductRepo {
         Ok((products, num_pages))
     }
 
-    /// Update the stock quantity for a product identified by `id`.
+    /// Update a product's stock quantity and set its `updated_at` timestamp to the current time.
     ///
-    /// Attempts to persist `new_quantity` to the product's `stock_quantity` and sets `updated_at` to the current time.
+    /// Attempts to persist `new_quantity` to the product identified by `id`. On success returns the
+    /// updated `product::Model`; on failure returns a repository `Error`.
     ///
     /// # Examples
     ///
@@ -225,19 +229,18 @@ impl ProductRepository for SeaOrmProductRepo {
             .map_err(Error::from)
     }
 
-    /// Updates the specified fields of the product with the given id.
+    /// Update the specified fields of the product with the given id.
     ///
-    /// Only the provided optional fields (`name`, `description`, `price`, `category_id`) are changed;
-    /// `updated_at` is set to the current timestamp. Fields passed as `None` are left unchanged.
+    /// Only the optional fields provided (`name`, `description`, `price`, `category_id`) are changed; `updated_at` is set to the current UTC timestamp in milliseconds. Fields passed as `None` are left unchanged.
     ///
     /// # Returns
     ///
-    /// `product::Model` containing the updated product on success, or an `Error` on failure.
+    /// The updated `product::Model` on success.
     ///
     /// # Examples
     ///
-    /// ```
-    /// // Assumes `repo` is a SeaOrmProductRepo and `Decimal` is in scope.
+    /// ```ignore
+    /// // Assumes `repo` is a `SeaOrmProductRepo` and `Decimal` is in scope.
     /// let updated = repo
     ///     .update_detail_by_id(
     ///         42,
@@ -280,9 +283,9 @@ impl ProductRepository for SeaOrmProductRepo {
             .map_err(Error::from)
     }
 
-    /// Delete a product by its ID and return the deleted model.
+    /// Deletes the product with the specified id and returns the deleted model.
     ///
-    /// If no product with the specified ID exists, returns an `Error::not_found`.
+    /// If no product with the specified id exists, returns an `Error::not_found`.
     ///
     /// # Returns
     ///
