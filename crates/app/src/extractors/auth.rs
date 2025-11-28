@@ -28,6 +28,28 @@ where
 {
     type Rejection = (StatusCode, Json<ErrorResponse>);
 
+    /// Extracts JWT claims from the request's `Authorization: Bearer` header and returns them wrapped in `JwtAuth`.
+    ///
+    /// On success returns `JwtAuth` containing the parsed `TokenClaims`. On failure returns a `401 Unauthorized` rejection with a JSON `ErrorResponse`:
+    /// - missing or unparsable `Authorization` header => `ErrorResponse { status: "fail", message: "Authorization header missing" }`
+    /// - invalid token => `ErrorResponse { status: "fail", message: "Invalid JWT token: <error>" }`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use axum::response::IntoResponse;
+    /// use axum::routing::get;
+    /// use axum::{Router, Json};
+    ///
+    /// // Example handler that uses the extractor
+    /// async fn protected_route(JwtAuth(claims): JwtAuth) -> impl IntoResponse {
+    ///     // Use `claims` to authorize or customize response
+    ///     Json(format!("user id: {}", claims.sub))
+    /// }
+    ///
+    /// // In router setup:
+    /// // let app = Router::new().route("/protected", get(protected_route));
+    /// ```
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
         let auth_service = &app_state.auth_service;

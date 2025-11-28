@@ -39,9 +39,9 @@ pub struct UpdateProductDto {
     pub description: Option<String>,
 }
 
-/// Trim leading and trailing whitespace from a deserialized string.
+/// Trims leading and trailing whitespace from a deserialized String.
 ///
-/// If deserialization fails, the deserialization error is returned unchanged.
+/// If deserialization fails, the original deserialization error is returned.
 ///
 /// # Examples
 ///
@@ -57,7 +57,7 @@ pub struct UpdateProductDto {
 /// let json = r#"{"q":"  hello world  "}"#;
 /// let s: S = serde_json::from_str(json).unwrap();
 /// assert_eq!(s.q, "hello world");
-/// ```ignore
+/// ```
 fn trim_and_sanitize<'de, D>(deserializer: D) -> Result<String, D::Error>
 where
     D: Deserializer<'de>,

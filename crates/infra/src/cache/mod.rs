@@ -6,11 +6,7 @@ type RedisPool = redis::aio::ConnectionManager;
 
 /// Create a Redis connection manager from the given Redis URL.
 ///
-/// The returned connection manager can be used for async Redis operations.
-///
-/// # Returns
-///
-/// `Ok(RedisPool)` with a connection manager on success, `Err(redis::RedisError)` on failure.
+/// Returns `Ok(RedisPool)` with a connection manager on success, `Err(redis::RedisError)` on failure.
 ///
 /// # Examples
 ///
@@ -19,11 +15,12 @@ type RedisPool = redis::aio::ConnectionManager;
 /// let pool = tokio::runtime::Runtime::new()
 ///     .unwrap()
 ///     .block_on(async { crate::cache::create_connection_pool("redis://127.0.0.1/").await });
+///
 /// match pool {
 ///     Ok(_mgr) => { /* connection manager obtained */ }
 ///     Err(e) => panic!("failed to create redis pool: {}", e),
 /// }
-/// ```ignore
+/// ```
 pub async fn create_connection_pool(url: &str) -> Result<RedisPool, redis::RedisError> {
     let redis_client = redis::Client::open(url)?;
     redis_client.get_connection_manager().await
