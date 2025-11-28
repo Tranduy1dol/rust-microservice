@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/Tranduy1dol/shopping-cart/actions/workflows/ci.yml/badge.svg)](https://github.com/Tranduy1dol/shopping-cart/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Tranduy1dol/shopping-cart/branch/develop/graph/badge.svg?token=QLN1P3LEH2)](https://codecov.io/gh/Tranduy1dol/shopping-cart)
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/Tranduy1dol/shopping-cart?utm_source=oss&utm_medium=github&utm_campaign=Tranduy1dol%2Fshopping-cart&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 A robust, high-performance shopping cart microservice built with Rust, following Clean Architecture principles.
 
