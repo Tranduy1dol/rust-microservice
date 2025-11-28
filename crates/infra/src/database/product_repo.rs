@@ -135,7 +135,6 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// Page numbering is 1-based; `page_size` controls the number of items per page.
     ///
-    —
     /// # Returns
     ///
     /// A tuple where the first element is a vector of products for the requested page, and the second is the total number of pages.
