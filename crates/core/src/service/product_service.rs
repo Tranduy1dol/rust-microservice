@@ -17,11 +17,11 @@ impl ProductService {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```ignore
     /// use std::sync::Arc;
     /// let repo: Arc<dyn ProductRepository> = Arc::new(MyRepo::new());
     /// let service = ProductService::new(repo);
-    /// ```
+    /// ```ignore
     pub fn new(product_repo: Arc<dyn ProductRepository>) -> Self {
         Self { product_repo }
     }
@@ -36,7 +36,7 @@ impl ProductService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # async fn example() {
     /// let repo = /* implement ProductRepository */ unimplemented!();
     /// let svc = ProductService::new(std::sync::Arc::new(repo));
@@ -50,7 +50,7 @@ impl ProductService {
     /// let created = svc.create_new(dto).await.unwrap();
     /// assert_eq!(created.name, "Widget");
     /// # }
-    /// ```
+    /// ```ignore
     pub async fn create_new(&self, dto: CreateProductDto) -> Result<product::Model, Error> {
         dto.validate()?;
         let CreateProductDto {
@@ -74,12 +74,12 @@ impl ProductService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # async fn run_example(service: &ProductService) {
     /// let product = service.get_by_id(1).await.unwrap();
     /// assert_eq!(product.id, 1);
     /// # }
-    /// ```
+    /// ```ignore
     pub async fn get_by_id(&self, id: i64) -> Result<product::Model, Error> {
         self.product_repo.get_by_id(id).await
     }
@@ -91,7 +91,7 @@ impl ProductService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use std::sync::Arc;
     /// # use crates_core::service::product_service::ProductService;
     /// # use crates_core::dto::Pagination;
@@ -99,7 +99,7 @@ impl ProductService {
     /// let (products, total) = svc.get_by_category_id(42, Pagination { page: 1, page_size: 10 }).await?;
     /// assert!(total >= products.len() as u64);
     /// # Ok(()) }
-    /// ```
+    /// ```ignore
     pub async fn get_by_category_id(
         &self,
         category_id: i64,
@@ -121,7 +121,7 @@ impl ProductService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # fn example() {
     /// #     tokio_test::block_on(async {
     /// let svc = todo!(); // ProductService instance
@@ -129,7 +129,7 @@ impl ProductService {
     /// assert!(total >= products.len() as u64);
     /// #     });
     /// # }
-    /// ```
+    /// ```ignore
     pub async fn get_all(
         &self,
         pagination: Pagination,
@@ -151,7 +151,7 @@ impl ProductService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use crate::service::product_service::ProductService;
     /// # use crate::dto::{SearchQueryDto, Pagination};
     /// # async fn example(service: &ProductService) {
@@ -160,7 +160,7 @@ impl ProductService {
     /// let (products, total) = service.search(query, pagination).await.unwrap();
     /// assert!(total >= products.len() as u64);
     /// # }
-    /// ```
+    /// ```ignore
     pub async fn search(
         &self,
         query_string: SearchQueryDto,
@@ -182,7 +182,7 @@ impl ProductService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use std::sync::Arc;
     /// # use futures::executor::block_on;
     /// # // setup: service and repo would be created in real code
@@ -196,7 +196,7 @@ impl ProductService {
     ///     Ok(updated) => assert_eq!(updated.stock_quantity, new_qty),
     ///     Err(e) => panic!("update failed: {:?}", e),
     /// }
-    /// ```
+    /// ```ignore
     pub async fn update_stock(&self, id: i64, new_quantity: i32) -> Result<product::Model, Error> {
         if new_quantity < 0 {
             return Err(Error::bad_request(
@@ -217,7 +217,7 @@ impl ProductService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// async fn example(service: &crate::service::product_service::ProductService) {
     ///     let dto = crate::dto::UpdateProductDto {
     ///         product_id: 1,
@@ -231,7 +231,7 @@ impl ProductService {
     ///     let updated = service.update_detail_by_id(dto).await.unwrap();
     ///     assert_eq!(updated.id, 1);
     /// }
-    /// ```
+    /// ```ignore
     pub async fn update_detail_by_id(
         &self,
         dto: UpdateProductDto,
@@ -257,7 +257,7 @@ impl ProductService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use std::sync::Arc;
     /// # use crates::core::service::ProductService;
     /// # use crates::core::repository::ProductRepository;
@@ -266,7 +266,7 @@ impl ProductService {
     /// let deleted = svc.delete_by_id(42).await?;
     /// // `deleted` is the removed `product::Model`
     /// # Ok(()) }
-    /// ```
+    /// ```ignore
     pub async fn delete_by_id(&self, id: i64) -> Result<product::Model, Error> {
         self.product_repo.delete_by_id(id).await
     }

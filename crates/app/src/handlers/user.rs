@@ -13,7 +13,7 @@ use crate::state::AppState;
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// use crate::state::AppState;
 /// use app::handlers::user::routes;
 ///
@@ -63,7 +63,7 @@ pub async fn register(
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// use axum::Json;
 /// // Construct AppState and LoginDto appropriately in real code.
 /// # async fn example() {

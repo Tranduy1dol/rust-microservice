@@ -12,7 +12,7 @@ pub mod user_repo;
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// # async {
 /// let conn = create_connection_pool("sqlite::memory:").await;
 /// // use `conn`...

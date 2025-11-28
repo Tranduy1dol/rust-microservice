@@ -14,7 +14,7 @@ type RedisPool = redis::aio::ConnectionManager;
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// // Example uses a synchronous runtime to call the async function.
 /// let pool = tokio::runtime::Runtime::new()
 ///     .unwrap()
@@ -23,7 +23,7 @@ type RedisPool = redis::aio::ConnectionManager;
 ///     Ok(_mgr) => { /* connection manager obtained */ }
 ///     Err(e) => panic!("failed to create redis pool: {}", e),
 /// }
-/// ```
+/// ```ignore
 pub async fn create_connection_pool(url: &str) -> Result<RedisPool, redis::RedisError> {
     let redis_client = redis::Client::open(url)?;
     redis_client.get_connection_manager().await

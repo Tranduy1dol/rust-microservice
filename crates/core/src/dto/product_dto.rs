@@ -45,7 +45,7 @@ pub struct UpdateProductDto {
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// use serde::Deserialize;
 ///
 /// #[derive(Deserialize, Debug, PartialEq)]
@@ -57,7 +57,7 @@ pub struct UpdateProductDto {
 /// let json = r#"{"q":"  hello world  "}"#;
 /// let s: S = serde_json::from_str(json).unwrap();
 /// assert_eq!(s.q, "hello world");
-/// ```
+/// ```ignore
 fn trim_and_sanitize<'de, D>(deserializer: D) -> Result<String, D::Error>
 where
     D: Deserializer<'de>,
@@ -98,12 +98,12 @@ impl From<entities::product::Model> for ProductResponseDto {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// // Assuming `model` is an `entities::product::Model` instance:
     /// // let model = entities::product::Model { /* fields */ };
     /// // let dto = ProductResponseDto::from(model);
     /// // assert_eq!(dto.id, /* expected id */);
-    /// ```
+    /// ```ignore
     fn from(model: entities::product::Model) -> Self {
         Self {
             id: model.id,

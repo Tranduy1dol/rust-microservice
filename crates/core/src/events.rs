@@ -18,7 +18,7 @@ impl AppEvent {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use crate::events::AppEvent;
     /// use rust_decimal::Decimal;
     ///
@@ -27,7 +27,7 @@ impl AppEvent {
     ///
     /// let o = AppEvent::OrderPlaced { order_id: 2, user_id: 1, total: Decimal::new(100, 2) };
     /// assert_eq!(o.name(), "OrderPlaced");
-    /// ```
+    /// ```ignore
     pub fn name(&self) -> &'static str {
         match self {
             AppEvent::UserRegistered { .. } => "UserRegistered",

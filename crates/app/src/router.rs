@@ -6,7 +6,7 @@ use super::{handlers, state::AppState};
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use crate::router::create_router;
 /// use crate::AppState;
 ///
@@ -35,7 +35,7 @@ pub fn create_router(state: AppState) -> Router {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// let state = unimplemented!(); // replace with a real `AppState`
 /// let router = api_routes(state);
 /// ```

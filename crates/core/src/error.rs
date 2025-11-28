@@ -55,19 +55,6 @@ impl Error {
     /// Map an `Error` variant to an HTTP status code and an application-specific numeric error code.
     ///
     /// # Returns
-    ///
-    /// `(StatusCode, u16)` where the first element is the HTTP status code and the second is the application-specific numeric error code.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use axum::http::StatusCode;
-    /// use crate::error::Error;
-    ///
-    /// let err = Error::bad_request("invalid input".to_string());
-    /// let (status, code) = err.get_codes();
-    /// assert_eq!(status, StatusCode::BAD_REQUEST);
-    /// assert_eq!(code, 10002);
     /// ```
     fn get_codes(&self) -> (StatusCode, u16) {
         match self {

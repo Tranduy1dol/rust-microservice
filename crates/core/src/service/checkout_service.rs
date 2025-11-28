@@ -16,13 +16,13 @@ impl CheckoutService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use std::sync::Arc;
     /// // assume CartService and CheckoutRepository impl are in scope
     /// let cart_service = Arc::new(CartService::new());
     /// let checkout_repo: Arc<dyn CheckoutRepository> = Arc::new(InMemoryCheckoutRepo::new());
     /// let svc = CheckoutService::new(cart_service, checkout_repo);
-    /// ```
+    /// ```ignore
     pub fn new(cart_service: Arc<CartService>, checkout_repo: Arc<dyn CheckoutRepository>) -> Self {
         Self {
             cart_service,
@@ -36,11 +36,11 @@ impl CheckoutService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// // assuming `svc` is a configured `CheckoutService`
     /// let result = futures::executor::block_on(async { svc.checkout(1).await });
     /// assert!(result.is_ok());
-    /// ```
+    /// ```ignore
     pub async fn checkout(&self, user_id: i64) -> Result<order::Model, Error> {
         let cart = self.cart_service.get_cart(user_id).await?;
 

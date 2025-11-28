@@ -8,11 +8,8 @@ use serde::Deserialize;
 pub struct Config {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
-    #[allow(dead_code)]
     pub redis: RedisConfig,
-    #[allow(dead_code)]
     pub jwt: JwtConfig,
-    #[allow(dead_code)]
     pub log: LogConfig,
 }
 
@@ -62,7 +59,7 @@ impl Config {
     ///
     /// ```
     /// // Load configuration and panic on failure in examples/tests
-    /// let cfg = crate::config::Config::new().unwrap();
+    /// let cfg = app_lib::config::Config::new().unwrap();
     /// // access a field to illustrate usage
     /// let _port = cfg.server.port;
     /// ```
@@ -86,7 +83,7 @@ impl Default for Config {
     ///
     /// ```
     /// // Requires `Config` to be in scope:
-    /// let cfg = Config::default();
+    /// let cfg = app_lib::config::Config::default();
     /// // Use the loaded configuration
     /// let _port = cfg.server.port;
     /// ```

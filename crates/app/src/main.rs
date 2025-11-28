@@ -1,21 +1,24 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use app_core::events::AppEvent;
-use app_core::service::{
-    cart_service::CartService, checkout_service::CheckoutService, product_service::ProductService,
-    user_service::UserService,
+use app_core::{
+    events::AppEvent,
+    service::{
+        auth_service::AuthService, cart_service::CartService, checkout_service::CheckoutService,
+        product_service::ProductService, user_service::UserService,
+    },
+    tracing::init_standard_tracing,
 };
-use app_core::tracing::init_standard_tracing;
-use infra::cache::RedisCartRepository;
-use infra::database::{
-    checkout_repo::SeaOrmCheckoutRepo, create_connection_pool, product_repo::SeaOrmProductRepo,
-    user_repo::SeaOrmUserRepo,
+use infra::{
+    cache::RedisCartRepository,
+    database::{
+        checkout_repo::SeaOrmCheckoutRepo, create_connection_pool, product_repo::SeaOrmProductRepo,
+        user_repo::SeaOrmUserRepo,
+    },
 };
 use tokio::sync::mpsc;
 
-use app_lib::config::Config;
-use app_lib::{router, state, worker};
+use app_lib::{config::Config, router, state, worker};
 
 /// Bootstraps configuration, connections, services, and starts the HTTP server.
 ///
@@ -55,9 +58,11 @@ async fn main() -> anyhow::Result<()> {
     let user_repo_adapter = Arc::new(SeaOrmUserRepo::new(db_pool.clone()));
     let user_service = Arc::new(UserService::new(
         user_repo_adapter,
-        config.jwt.secret,
+        config.jwt.secret.clone(),
         event_sender,
     ));
+
+    let auth_service = Arc::new(AuthService::new(config.jwt.secret));
 
     let product_repo_adapter = Arc::new(SeaOrmProductRepo::new(db_pool.clone()));
     let product_service = Arc::new(ProductService::new(product_repo_adapter));
@@ -72,6 +77,7 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     let app_state = state::AppState {
+        auth_service,
         user_service,
         product_service,
         cart_service,

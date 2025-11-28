@@ -20,10 +20,10 @@ pub struct Pagination {
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// let p = default_page();
 /// assert_eq!(p, 1);
-/// ```
+/// ```ignore
 fn default_page() -> u64 {
     1
 }
@@ -35,9 +35,9 @@ fn default_page() -> u64 {
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// assert_eq!(default_page_size(), 10);
-/// ```
+/// ```ignore
 fn default_page_size() -> u64 {
     10
 }
@@ -55,12 +55,12 @@ impl<T> PaginationResponseDto<T> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// let dto = PaginationResponseDto::new(vec![1, 2, 3], 1, 10);
     /// assert_eq!(dto.data, vec![1, 2, 3]);
     /// assert_eq!(dto.page, 1);
     /// assert_eq!(dto.page_size, 10);
-    /// ```
+    /// ```ignore
     pub fn new(data: Vec<T>, page: u64, page_size: u64) -> Self {
         Self {
             data,

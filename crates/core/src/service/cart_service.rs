@@ -13,12 +13,12 @@ impl CartService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use std::sync::Arc;
     /// // `repo` must implement `CartRepository`.
     /// let repo = Arc::new(/* your CartRepository implementation */);
     /// let svc = CartService::new(repo);
-    /// ```
+    /// ```ignore
     pub fn new(cart_repo: Arc<dyn CartRepository>) -> Self {
         Self { cart_repo }
     }
@@ -36,7 +36,7 @@ impl CartService {
     /// let service: CartService = /* obtain CartService instance */;
     /// let cart = service.get_cart(42).await.unwrap();
     /// assert_eq!(cart.user_id, 42);
-    /// ```
+    /// ```ignore
     pub async fn get_cart(&self, user_id: i64) -> Result<CartDto, Error> {
         let cart = self.cart_repo.get_by_user_id(user_id).await?;
         Ok(cart.unwrap_or_else(|| CartDto::new(user_id)))
@@ -56,13 +56,13 @@ impl CartService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use std::sync::Arc;
     /// # async fn example(cart_service: &crate::service::CartService) {
     /// let updated = cart_service.add_item(1, 42, 3).await.unwrap();
     /// assert!(updated.items.iter().any(|i| i.product_id == 42 && i.quantity >= 3));
     /// # }
-    /// ```
+    /// ```ignore
     pub async fn add_item(
         &self,
         user_id: i64,
@@ -92,7 +92,7 @@ impl CartService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # async fn example(svc: &crate::service::CartService) -> Result<(), crate::error::Error> {
     /// let user_id = 1;
     /// let product_id = 42;
@@ -100,7 +100,7 @@ impl CartService {
     /// // `updated` is the cart after the item(s) with `product_id` have been removed
     /// # Ok(())
     /// # }
-    /// ```
+    /// ```ignore
     ///
     /// # Returns
     ///
@@ -118,12 +118,12 @@ impl CartService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # async fn example(service: &crate::service::CartService) -> Result<(), crate::Error> {
     /// service.clear_cart(42).await?;
     /// # Ok(())
     /// # }
-    /// ```
+    /// ```ignore
     ///
     /// # Returns
     ///

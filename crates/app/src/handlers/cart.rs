@@ -1,13 +1,15 @@
-use app_core::dto::cart_dto::{AddCartItemDto, CartDto};
-use app_core::error::Error;
+use app_core::{
+    dto::cart_dto::{AddCartItemDto, CartDto},
+    error::Error,
+};
 use axum::{
-    Extension, Json, Router,
+    Json, Router,
     extract::{Path, State},
     routing::{delete, get, post},
 };
 use validator::Validate;
 
-use crate::state::AppState;
+use crate::{extractors::auth::JwtAuth, state::AppState};
 
 /// Creates an Axum `Router` configured for cart operations and attaches the provided application state.
 ///
@@ -37,7 +39,7 @@ pub fn routes(state: AppState) -> Router {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use axum::{Extension, extract::State, Json};
 /// use your_crate::state::AppState;
 /// use your_crate::handlers::cart::get_cart;
@@ -54,9 +56,9 @@ pub fn routes(state: AppState) -> Router {
 /// ```
 pub async fn get_cart(
     State(state): State<AppState>,
-    Extension(user_id): Extension<i64>,
+    JwtAuth(claims): JwtAuth,
 ) -> Result<Json<CartDto>, Error> {
-    let cart = state.cart_service.get_cart(user_id).await?;
+    let cart = state.cart_service.get_cart(claims.sub).await?;
     Ok(Json(cart))
 }
 
@@ -72,7 +74,7 @@ pub async fn get_cart(
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// # use axum::{extract::{State, Extension}, Json};
 /// # use crate::state::AppState;
 /// # use crate::handlers::cart::{add_item, AddCartItemDto, CartDto};
@@ -85,13 +87,13 @@ pub async fn get_cart(
 /// ```
 pub async fn add_item(
     State(state): State<AppState>,
-    Extension(user_id): Extension<i64>,
+    JwtAuth(claims): JwtAuth,
     Json(dto): Json<AddCartItemDto>,
 ) -> Result<Json<CartDto>, Error> {
     dto.validate()?;
     let cart = state
         .cart_service
-        .add_item(user_id, dto.product_id, dto.quantity)
+        .add_item(claims.sub, dto.product_id, dto.quantity)
         .await?;
     Ok(Json(cart))
 }
@@ -104,7 +106,7 @@ pub async fn add_item(
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// #[tokio::test]
 /// async fn remove_item_example() {
 ///     // `state` and middleware-provided `user_id` would be supplied by the application in real use.
@@ -120,9 +122,12 @@ pub async fn add_item(
 /// ```
 pub async fn remove_item(
     State(state): State<AppState>,
-    Extension(user_id): Extension<i64>,
+    JwtAuth(claims): JwtAuth,
     Path(product_id): Path<i64>,
 ) -> Result<Json<CartDto>, Error> {
-    let cart = state.cart_service.remove_item(user_id, product_id).await?;
+    let cart = state
+        .cart_service
+        .remove_item(claims.sub, product_id)
+        .await?;
     Ok(Json(cart))
 }

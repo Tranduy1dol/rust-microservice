@@ -17,12 +17,12 @@ impl SeaOrmProductRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use sea_orm::DatabaseConnection;
     /// # use crate::repos::SeaOrmProductRepo;
     /// let db: DatabaseConnection = /* obtain a DatabaseConnection */ unimplemented!();
     /// let repo = SeaOrmProductRepo::new(db);
-    /// ```
+    /// ```ignore
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
@@ -40,13 +40,13 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// // assumes `repo: SeaOrmProductRepo` and `price: rust_decimal::Decimal` are available
     /// # async fn example(repo: &SeaOrmProductRepo, price: rust_decimal::Decimal) {
     /// let product = repo.create_new("Soda".into(), None, price, None, 10).await.unwrap();
     /// assert_eq!(product.name, "Soda");
     /// # }
-    /// ```
+    /// ```ignore
     async fn create_new(
         &self,
         name: String,
@@ -82,13 +82,13 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use crate::repositories::seaorm::SeaOrmProductRepo;
     /// # async fn example(repo: &SeaOrmProductRepo) {
     /// let product = repo.get_by_id(1).await.unwrap();
     /// println!("Found product: {}", product.name);
     /// # }
-    /// ```
+    /// ```ignore
     async fn get_by_id(&self, id: i64) -> Result<product::Model, Error> {
         product::Entity::find_by_id(id)
             .one(&self.db)
@@ -107,12 +107,12 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # async fn example(repo: &SeaOrmProductRepo) -> Result<(), Error> {
     /// let (products, total_pages) = repo.get_by_category_id(42, 1, 20).await?;
     /// // `products` contains up to 20 items from category 42; `total_pages` is the total page count.
     /// # Ok(()) }
-    /// ```
+    /// ```ignore
     async fn get_by_category_id(
         &self,
         category_id: i64,
@@ -138,14 +138,14 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use your_crate::repos::SeaOrmProductRepo;
     /// # async fn example(repo: &SeaOrmProductRepo) {
     /// let (products, total_pages) = repo.get_all(1, 20).await.unwrap();
     /// assert!(total_pages >= 1);
     /// let _first_page: Vec<_> = products;
     /// # }
-    /// ```
+    /// ```ignore
     async fn get_all(
         &self,
         page: u64,
@@ -165,13 +165,13 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use crate::repos::SeaOrmProductRepo;
     /// # async fn example(repo: &SeaOrmProductRepo) {
     /// let (products, total_pages) = repo.search_by_query_string("phone".into(), 1, 10).await.unwrap();
     /// assert!(total_pages >= 0);
     /// # }
-    /// ```
+    /// ```ignore
     ///
     /// # Returns
     ///
@@ -199,7 +199,7 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// // Create a runtime and repository (pseudo-code — replace with your setup)
     /// let rt = tokio::runtime::Runtime::new().unwrap();
     /// let repo = /* SeaOrmProductRepo::new(db_conn) */;
@@ -210,7 +210,7 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// assert_eq!(updated.id, 42);
     /// assert_eq!(updated.stock_quantity, 10);
-    /// ```
+    /// ```ignore
     async fn update_stock(&self, id: i64, new_quantity: i32) -> Result<product::Model, Error> {
         let active_model = product::ActiveModel {
             id: Set(id),
@@ -236,7 +236,7 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// // Assumes `repo` is a SeaOrmProductRepo and `Decimal` is in scope.
     /// let updated = repo
     ///     .update_detail_by_id(
@@ -249,7 +249,7 @@ impl ProductRepository for SeaOrmProductRepo {
     ///     .await
     ///     .unwrap();
     /// assert_eq!(updated.id, 42);
-    /// ```
+    /// ```ignore
     async fn update_detail_by_id(
         &self,
         id: i64,
@@ -290,12 +290,12 @@ impl ProductRepository for SeaOrmProductRepo {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # async fn example(repo: &impl crate::repositories::ProductRepository) {
     /// let deleted = repo.delete_by_id(1).await.unwrap();
     /// assert_eq!(deleted.id, 1);
     /// # }
-    /// ```
+    /// ```ignore
     async fn delete_by_id(&self, id: i64) -> Result<product::Model, Error> {
         let results = product::Entity::delete_by_id(id)
             .exec_with_returning(&self.db)

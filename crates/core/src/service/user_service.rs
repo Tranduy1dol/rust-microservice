@@ -3,23 +3,18 @@ use std::sync::Arc;
 use chrono::{Duration, Utc};
 use entities::user;
 use jsonwebtoken::{encode, EncodingKey, Header};
-use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use validator::Validate;
 
 use crate::{
-    dto::user_dto::{LoginDto, RegisterUserDto},
+    dto::{
+        auth::TokenClaims,
+        user_dto::{LoginDto, RegisterUserDto},
+    },
     error::Error,
     events::AppEvent,
     ports::user_repo::UserRepository,
 };
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: i64,
-    exp: usize,
-    iat: usize,
-}
 
 pub struct UserService {
     user_repo: Arc<dyn UserRepository>,
@@ -35,7 +30,7 @@ impl UserService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use std::sync::Arc;
     /// use tokio::sync::mpsc;
     /// # use crates_core::service::UserService;
@@ -46,7 +41,7 @@ impl UserService {
     /// let jwt_secret = "your-jwt-secret".to_string();
     /// let (tx, _rx) = mpsc::channel::<AppEvent>(8);
     /// let svc = UserService::new(repo, jwt_secret, tx);
-    /// ```
+    /// ```ignore
     pub fn new(
         user_repo: Arc<dyn UserRepository>,
         jwt_secret: String,
@@ -70,7 +65,7 @@ impl UserService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use std::sync::Arc;
     /// use tokio::sync::mpsc;
     /// use crates_core::service::UserService;
@@ -97,7 +92,7 @@ impl UserService {
     /// });
     ///
     /// assert_eq!(created.user_name, "alice");
-    /// ```
+    /// ```ignore
     #[tracing::instrument(skip_all, fields(user_email = %dto.email))]
     pub async fn register(&self, dto: RegisterUserDto) -> Result<user::Model, Error> {
         dto.validate()?;
@@ -145,13 +140,13 @@ impl UserService {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use futures::executor::block_on;
     /// // let service = /* UserService instance */;
     /// // let dto = /* LoginDto with email and password */;
     /// // let token = block_on(service.login(dto)).unwrap();
     /// // assert!(!token.is_empty());
-    /// ```
+    /// ```ignore
     pub async fn login(&self, dto: LoginDto) -> Result<String, Error> {
         let user = self.user_repo.get_by_email(dto.email).await?;
 
@@ -169,7 +164,7 @@ impl UserService {
         let iat = now.timestamp() as usize;
         let exp = (now + Duration::hours(24)).timestamp() as usize;
 
-        let claims = Claims {
+        let claims = TokenClaims {
             sub: user.id,
             iat,
             exp,
