@@ -1,26 +1,29 @@
-FROM rust:1.76 AS builder
+# Builder stage
+FROM rust:latest AS builder
 
-RUN apt -y update
-RUN apt install libssl-dev
-RUN #apt install libudev
+WORKDIR /app
+COPY . .
+
+# Build the application
+# We need to build the specific binary 'app'
+RUN cargo build --release --bin app
+
+# Runtime stage
+FROM debian:bookworm-slim
 
 WORKDIR /app
 
-COPY ./ .
+# Install runtime dependencies (if any, e.g., OpenSSL)
+RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 
-ENV RUSTFLAGS='-C linker=x86_64-linux-gnu-gcc'
-ENV CC='gcc'
-ENV CC_x86_64_unknown_linux_gnu=x86_64-linux-gnu-gcc
-ENV CC_x86_64_unknown_linux_gnu=x86_64-linux-gnu-gcc
+# Copy the binary
+COPY --from=builder /app/target/release/app /usr/local/bin/app
 
-RUN cargo build --target x86_64-unknown-linux-gnu --release
+# Copy configuration
+COPY --from=builder /app/config ./config
 
-FROM scratch
+# Expose port
+EXPOSE 3000
 
-WORKDIR /app
-
-#COPY --from=builder /app/target/x86_64-unknown-linux-gnu/release/restful-api ./
-#COPY --from=builder /app/.env ./
-COPY ./ .
-
-CMD ["/app/restful-api"]
+# Run the application
+CMD ["app"]

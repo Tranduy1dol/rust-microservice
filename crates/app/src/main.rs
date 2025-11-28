@@ -14,13 +14,8 @@ use infra::database::{
 };
 use tokio::sync::mpsc;
 
-use crate::config::Config;
-
-mod config;
-pub mod handlers;
-mod router;
-mod state;
-mod worker;
+use app_lib::config::Config;
+use app_lib::{router, state, worker};
 
 /// Bootstraps configuration, connections, services, and starts the HTTP server.
 ///
