@@ -103,6 +103,20 @@ cargo test --test race_condition_test
 | `DELETE` | `/api/v1/cart/items/{id}` | Remove item from cart |
 | `POST` | `/api/v1/checkout` | Checkout and create order |
 
+## 🚀 Performance
+ 
+We use [k6](https://k6.io/) for stress testing.
+ 
+**Scenario:**
+- **Endpoint:** `GET /api/v1/products/all`
+- **VUs (Virtual Users):** 50
+- **Duration:** 2 minutes
+ 
+**Results:**
+- **Throughput:** ~8,074 RPS
+- **Avg Latency:** 4.51ms
+- **P95 Latency:** 7.61ms
+ 
 ## 🤝 Contributing
 
 1. Fork the repository
