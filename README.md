@@ -1,4 +1,4 @@
-# Shopping Cart Microservice
+# shopping-cart
 
 [![CI](https://github.com/Tranduy1dol/shopping-cart/actions/workflows/ci.yml/badge.svg)](https://github.com/Tranduy1dol/shopping-cart/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Tranduy1dol/shopping-cart/branch/develop/graph/badge.svg?token=QLN1P3LEH2)](https://codecov.io/gh/Tranduy1dol/shopping-cart)
@@ -6,7 +6,7 @@
 
 A robust, high-performance shopping cart microservice built with Rust, following Clean Architecture principles.
 
-## 🚀 Tech Stack
+## Tech Stack
 
 - **Language:** Rust 2024
 - **Web Framework:** Axum
@@ -16,7 +16,7 @@ A robust, high-performance shopping cart microservice built with Rust, following
 - **Containerization:** Docker & Docker Compose
 - **Testing:** Testcontainers, Mockall
 
-## ✨ Features
+## Features
 
 - **User Management**: Registration, Login (JWT), Profile.
 - **Product Catalog**: Browse products, manage inventory (Admin).
@@ -24,7 +24,7 @@ A robust, high-performance shopping cart microservice built with Rust, following
 - **Checkout**: Transactional order creation with stock validation.
 - **Reviews**: Product reviews and ratings.
 
-## 📂 Project Structure
+## Project Structure
 
 The project is organized as a Cargo Workspace with multiple crates to enforce separation of concerns:
 
@@ -34,7 +34,7 @@ The project is organized as a Cargo Workspace with multiple crates to enforce se
 - `crates/entities`: SeaORM entity definitions (Database schema).
 - `crates/migration`: Database migrations.
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -66,7 +66,7 @@ The project is organized as a Cargo Workspace with multiple crates to enforce se
    ```
    The server will start at `http://127.0.0.1:3000`.
 
-## ⚙️ Configuration
+## Configuration
 
 Configuration is managed via `config/default.toml` and environment variables.
 
@@ -76,7 +76,7 @@ Configuration is managed via `config/default.toml` and environment variables.
 | `APP_DATABASE__URL` | PostgreSQL Connection String | `postgres://postgres:postgres@localhost:5432/shopping_cart` |
 | `APP_REDIS__URL` | Redis Connection String | `redis://localhost:6379` |
 
-## 🧪 Testing
+## Testing
 
 Run unit and integration tests:
 
@@ -91,7 +91,7 @@ cargo test --test integration_test
 cargo test --test race_condition_test
 ```
 
-## 📚 API Documentation
+## API Documentation
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -103,7 +103,7 @@ cargo test --test race_condition_test
 | `DELETE` | `/api/v1/cart/items/{id}` | Remove item from cart |
 | `POST` | `/api/v1/checkout` | Checkout and create order |
 
-## 🚀 Performance
+## Performance
  
 We use [k6](https://k6.io/) for stress testing.
  
@@ -116,15 +116,3 @@ We use [k6](https://k6.io/) for stress testing.
 - **Throughput:** ~8,074 RPS
 - **Avg Latency:** 4.51ms
 - **P95 Latency:** 7.61ms
- 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
